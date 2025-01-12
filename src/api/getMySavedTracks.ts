@@ -2,11 +2,12 @@ import { getSpotifyClient } from "../helpers/withSpotifyClient";
 import { getErrorMessage } from "../helpers/getError";
 import { SavedTrackObject } from "../helpers/spotify.api";
 
-interface MinimalTrack {
+export interface MinimalTrack {
   id: string;
   name: string;
   artists: { name: string }[];
   album: {
+    id: string;
     name: string;
     images: { url: string }[];
   };
@@ -38,6 +39,7 @@ export async function getMySavedTracks({ offset = 0, fetchAll = false, onProgres
       name: item.track?.name ?? "",
       artists: item.track?.artists?.map((artist) => ({ name: artist.name ?? "" })) ?? [],
       album: {
+        id: item.track?.album?.id ?? "",
         name: item.track?.album?.name ?? "",
         images: item.track?.album?.images?.map((image) => ({ url: image.url ?? "" })) ?? [],
       },

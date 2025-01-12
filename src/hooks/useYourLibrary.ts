@@ -6,6 +6,37 @@ import { getMySavedShows } from "../api/getMySavedShows";
 import { getMySavedEpisodes } from "../api/getMySavedEpisodes";
 import { useMySavedTracks } from "./useMySavedTracks";
 import { useCallback } from "react";
+import {
+  SimplifiedPlaylistObject,
+  SimplifiedAlbumObject,
+  ArtistObject,
+  SimplifiedShowObject,
+  SimplifiedEpisodeObject,
+} from "../helpers/spotify.api";
+import { MinimalTrack } from "../api/getMySavedTracks";
+
+interface LibraryData {
+  playlists?: {
+    items?: SimplifiedPlaylistObject[];
+  };
+  albums?: {
+    items: SimplifiedAlbumObject[];
+  };
+  artists?: {
+    items?: ArtistObject[];
+  };
+  tracks?: {
+    items: MinimalTrack[];
+    total: number;
+    hasMore: boolean;
+  };
+  shows?: {
+    items: SimplifiedShowObject[];
+  };
+  episodes?: {
+    items: SimplifiedEpisodeObject[];
+  };
+}
 
 type UseMyLibraryProps = {
   execute?: boolean;
@@ -26,43 +57,38 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
   });
 
   // Memoize the fetch function to prevent unnecessary re-renders
-  const fetchLibraryData = useCallback(
-    async () => {
-      const [playlists, albums, artists, shows, episodes] = await Promise.all([
-        getUserPlaylists(),
-        getMySavedAlbums(),
-        getFollowedArtists(),
-        getMySavedShows(),
-        getMySavedEpisodes(),
-      ]);
-      return [playlists, albums, artists, shows, episodes];
-    },
-    [], // No dependencies needed since all fetch functions are stable
-  );
+  const fetchLibraryData = useCallback(async () => {
+    const [playlists, albums, artists, shows, episodes] = await Promise.all([
+      getUserPlaylists(),
+      getMySavedAlbums(),
+      getFollowedArtists(),
+      getMySavedShows(),
+      getMySavedEpisodes(),
+    ]);
+    return [playlists, albums, artists, shows, episodes] as const;
+  }, []);
 
   const {
     data = [],
     error,
     isLoading,
-  } = useCachedPromise(
-    fetchLibraryData,
-    [], // No dependencies needed since fetchLibraryData is memoized
-    {
-      keepPreviousData: options.keepPreviousData,
-    },
-  );
+  } = useCachedPromise(fetchLibraryData, [], {
+    keepPreviousData: options.keepPreviousData,
+  });
 
   const [playlistsData, albumsData, artistsData, showsData, episodesData] = data;
 
+  const myLibraryData: LibraryData = {
+    playlists: playlistsData,
+    albums: albumsData,
+    artists: artistsData,
+    tracks: tracksData,
+    shows: showsData,
+    episodes: episodesData,
+  };
+
   return {
-    myLibraryData: {
-      playlists: playlistsData,
-      albums: albumsData,
-      artists: artistsData,
-      tracks: tracksData,
-      shows: showsData,
-      episodes: episodesData,
-    },
+    myLibraryData,
     myLibraryError: error,
     myLibraryIsLoading: isLoading || tracksLoading,
     tracksFetchProgress,

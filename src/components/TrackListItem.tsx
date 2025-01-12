@@ -1,55 +1,28 @@
 import { Image, List } from "@raycast/api";
-import { formatMs } from "../helpers/formatMs";
-import { SimplifiedAlbumObject, SimplifiedTrackObject } from "../helpers/spotify.api";
+import { MinimalTrack } from "../api/getMySavedTracks";
 import { TrackActionPanel } from "./TrackActionPanel";
 
-type TrackListItemProps = {
-  track: SimplifiedTrackObject;
-  album?: SimplifiedAlbumObject;
-  showAddToSaved?: boolean;
+interface TrackListItemProps {
+  track: MinimalTrack;
+  startIndex?: number;
   showGoToAlbum?: boolean;
-  playingContext?: string;
-  tracksToQueue?: SimplifiedTrackObject[];
-  id?: string;
-};
+}
 
-export default function TrackListItem({
-  track,
-  album,
-  showAddToSaved,
-  showGoToAlbum,
-  playingContext,
-  tracksToQueue,
-  id,
-}: TrackListItemProps) {
-  const title = track.name || "";
-  const subtitle = track?.artists?.map((a) => a.name).join(", ");
-
-  let icon: Image.ImageLike | undefined = undefined;
-  if (album?.images) {
-    icon = {
-      source: album.images[album.images.length - 1]?.url,
-    };
-  }
+export default function TrackListItem({ track, startIndex = 0, showGoToAlbum }: TrackListItemProps) {
+  const subtitle = `${track.artists.map((a) => a.name).join(", ")} • ${track.album.name}`;
+  const icon: Image.ImageLike | undefined = track.album.images[0]?.url
+    ? {
+        source: track.album.images[0].url,
+      }
+    : undefined;
 
   return (
     <List.Item
-      id={id}
-      icon={icon}
-      title={title}
+      title={track.name}
       subtitle={subtitle}
-      accessories={[{ text: track.duration_ms ? formatMs(track.duration_ms) : undefined }]}
-      actions={
-        <TrackActionPanel
-          title={title}
-          track={track}
-          album={album}
-          showAddToSaved={showAddToSaved}
-          showGoToAlbum={showGoToAlbum}
-          playingContext={playingContext}
-          tracksToQueue={tracksToQueue}
-        />
-      }
+      icon={icon}
+      accessories={[{ text: `#${startIndex + 1}` }]}
+      actions={<TrackActionPanel title={track.name} track={track} album={track.album} showGoToAlbum={showGoToAlbum} />}
     />
   );
 }

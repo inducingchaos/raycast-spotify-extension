@@ -4,13 +4,14 @@ import { useAlbumTracks } from "../hooks/useAlbumTracks";
 import { usePlaylistTracks } from "../hooks/usePlaylistTracks";
 import TrackListItem from "./TrackListItem";
 import { useState } from "react";
+import { MinimalTrack } from "../api/getMySavedTracks";
 
 const TRACKS_PER_PAGE = 50;
 
 type TracksListProps = {
   album?: SimplifiedAlbumObject;
   playlist?: SimplifiedPlaylistObject;
-  tracks?: SimplifiedTrackObject[];
+  tracks?: MinimalTrack[];
   showGoToAlbum?: boolean;
 };
 
@@ -31,7 +32,23 @@ export function TracksList({ album, playlist, tracks, showGoToAlbum }: TracksLis
     },
   });
 
-  const allTracks = albumTracksData?.items || playlistTracksData?.items || tracks;
+  // Transform album/playlist tracks to MinimalTrack format
+  const transformTrack = (track: SimplifiedTrackObject): MinimalTrack => ({
+    id: track.id ?? "",
+    name: track.name ?? "",
+    artists: track.artists?.map((artist) => ({ name: artist.name ?? "" })) ?? [],
+    album: {
+      id: track.album?.id ?? "",
+      name: track.album?.name ?? "",
+      images: track.album?.images?.map((image) => ({ url: image.url ?? "" })) ?? [],
+    },
+    uri: track.uri ?? "",
+  });
+
+  const allTracks =
+    tracks ||
+    (albumTracksData?.items ? albumTracksData.items.map(transformTrack) : undefined) ||
+    (playlistTracksData?.items ? playlistTracksData.items.map(transformTrack) : undefined);
   const isLoading = albumTracksIsLoading || playlistTracksIsLoading;
 
   if (!allTracks) {
@@ -61,10 +78,9 @@ export function TracksList({ album, playlist, tracks, showGoToAlbum }: TracksLis
       {currentTracks.map((track, index) => (
         <TrackListItem
           key={`${track.id}${startIndex + index}`}
-          playingContext={album?.uri || playlist?.uri}
           track={track}
-          album={album || track.album}
           showGoToAlbum={showGoToAlbum}
+          startIndex={startIndex + index}
         />
       ))}
     </List>

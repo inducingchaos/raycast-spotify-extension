@@ -10,6 +10,8 @@ Investigating memory issues with track fetching. Current diagnostic approach:
 4. Implemented data minimization to reduce memory footprint
 5. Optimized hooks to prevent double fetching and unnecessary re-renders
 6. Implemented parallel fetching with staggered requests
+7. Added type safety improvements and simplified UI components
+8. Unified track data structure across components
 
 ## Memory Investigation Notes
 
@@ -19,10 +21,26 @@ Investigating memory issues with track fetching. Current diagnostic approach:
   - Wrapped progress updates in useEffect
   - Optimized dependency arrays to prevent double fetching
   - Reduced rate limit delay to 25ms (from 100ms)
-  - Parallelized track fetching with staggered requests
-    - Initial request to get total count
-    - Subsequent requests run in parallel with slight delays
-    - Progress updates per completed batch
+  - Parallelized track fetching with staggered requests (5 requests per batch)
+  - Simplified track data structure and UI components:
+    ```typescript
+    interface MinimalTrack {
+      id: string;
+      name: string;
+      artists: { name: string }[];
+      album: {
+        id: string;
+        name: string;
+        images: { url: string }[];
+      };
+      uri: string;
+    }
+    ```
+  - Unified track handling:
+    - Single MinimalTrack type across all components
+    - Consistent transformation from Spotify API types
+    - Simplified action panel with core functionality
+    - Proper type safety in list components
 - Next steps:
   1. Re-enable UI components
   2. Test with larger libraries
