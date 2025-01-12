@@ -258,3 +258,66 @@ const { savedTracksData } = useMySavedTracks({
 // With loading states and progress
 const { savedTracksData, savedTracksIsLoading, savedTracksError, fetchProgress } = useMySavedTracks();
 ```
+
+## Search Implementation
+
+### Explored Solutions
+
+1. **Limit Results After Filtering**
+
+   - Attempted to limit displayed tracks to 6 after filtering
+   - Failed because it prevented Raycast's built-in filtering from accessing full dataset
+   - Would miss potential matches in non-displayed data
+
+2. **Custom Search with Result Limiting**
+
+   - Implemented basic case-insensitive search across stringified objects
+   - Could limit to 6 results easily
+   - Much worse search experience compared to Raycast's built-in filtering
+   - Would need complex scoring system to match Raycast's quality:
+     - Title exact matches
+     - Starts with matches
+     - Contains word matches
+     - Artist/album matches
+     - Proper weightings and sorting
+
+3. **Pagination Without Re-fetching**
+   - Explored Raycast's pagination API
+   - Designed for dynamic loading scenarios
+   - Not suitable for our use case where all data is already loaded
+   - Would still limit searchable dataset
+
+### Final Decision
+
+Chose to keep Raycast's built-in filtering with no result limiting because:
+
+- Superior search experience (partial matches, smart filtering)
+- Works across all track properties automatically
+- Maintains consistency with other Raycast extensions
+- Performance impact of rendering 200+ items is acceptable tradeoff for better search
+
+### Potential Future Improvements
+
+1. **Hybrid Approach**
+
+   - Keep Raycast's filtering but implement custom result ranking
+   - Show best matches first while keeping all results searchable
+   - Would require deeper integration with Raycast's List component
+
+2. **Virtual List**
+
+   - If performance becomes issue, implement virtual scrolling
+   - Only render visible items while keeping full dataset searchable
+   - Would need to ensure compatibility with Raycast's List component
+
+3. **Smart Caching**
+   - Current caching works well for subsequent loads
+   - Could explore more sophisticated caching strategies if needed
+   - Focus on optimizing initial load experience
+
+### Current Implementation
+
+- Uses Raycast's built-in filtering
+- Shows all matching results (no artificial limits)
+- Caches full dataset for quick subsequent searches
+- Maintains best possible search experience for users
