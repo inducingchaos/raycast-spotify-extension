@@ -20,7 +20,7 @@ interface GetMySavedTracksProps {
 }
 
 const MAX_TRACKS_PER_REQUEST = 50;
-const RATE_LIMIT_DELAY = 100; // 100ms delay between requests
+const RATE_LIMIT_DELAY = 25; // 100ms delay between requests
 
 export async function getMySavedTracks({
   limit = MAX_TRACKS_PER_REQUEST,

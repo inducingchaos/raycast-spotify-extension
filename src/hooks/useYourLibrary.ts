@@ -5,6 +5,7 @@ import { getFollowedArtists } from "../api/getFollowedArtists";
 import { getMySavedShows } from "../api/getMySavedShows";
 import { getMySavedEpisodes } from "../api/getMySavedEpisodes";
 import { useMySavedTracks } from "./useMySavedTracks";
+import { useCallback } from "react";
 
 type UseMyLibraryProps = {
   execute?: boolean;
@@ -24,20 +25,28 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     },
   });
 
-  const {
-    data = [],
-    error,
-    isLoading,
-  } = useCachedPromise(
-    () =>
-      Promise.all([
+  // Memoize the fetch function to prevent unnecessary re-renders
+  const fetchLibraryData = useCallback(
+    async () => {
+      const [playlists, albums, artists, shows, episodes] = await Promise.all([
         getUserPlaylists(),
         getMySavedAlbums(),
         getFollowedArtists(),
         getMySavedShows(),
         getMySavedEpisodes(),
-      ]),
-    [],
+      ]);
+      return [playlists, albums, artists, shows, episodes];
+    },
+    [], // No dependencies needed since all fetch functions are stable
+  );
+
+  const {
+    data = [],
+    error,
+    isLoading,
+  } = useCachedPromise(
+    fetchLibraryData,
+    [], // No dependencies needed since fetchLibraryData is memoized
     {
       keepPreviousData: options.keepPreviousData,
     },

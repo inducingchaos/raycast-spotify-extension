@@ -1,6 +1,6 @@
 import { useCachedPromise } from "@raycast/utils";
 import { getMySavedTracks } from "../api/getMySavedTracks";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type UseMySavedTracksProps = {
   limit?: number;
@@ -20,7 +20,8 @@ export function useMySavedTracks({
 }: UseMySavedTracksProps = {}) {
   const [fetchProgress, setFetchProgress] = useState<number>(0);
 
-  const { data, error, isLoading, revalidate } = useCachedPromise(
+  // Memoize the fetch function to prevent unnecessary re-renders
+  const fetchTracks = useCallback(
     async (limit?: number, offset?: number, fetchAll?: boolean) => {
       const result = await getMySavedTracks({
         limit,
@@ -30,18 +31,25 @@ export function useMySavedTracks({
       });
       return result;
     },
-    [limit, offset, fetchAll],
-    {
-      execute: options?.execute !== false,
-      keepPreviousData: options?.keepPreviousData,
-    },
+    [], // No dependencies needed since setFetchProgress is stable
   );
+
+  const { data, error, isLoading } = useCachedPromise(fetchTracks, [limit, offset, fetchAll], {
+    execute: options?.execute !== false,
+    keepPreviousData: options?.keepPreviousData,
+  });
+
+  // Reset progress when loading starts
+  useEffect(() => {
+    if (isLoading) {
+      setFetchProgress(0);
+    }
+  }, [isLoading]);
 
   return {
     savedTracksData: data,
     savedTracksError: error,
     savedTracksIsLoading: isLoading,
-    savedTracksRevalidate: revalidate,
     fetchProgress: isLoading ? fetchProgress : 100,
   };
 }
