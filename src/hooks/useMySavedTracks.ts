@@ -137,19 +137,29 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
 
   // Handle loading states and completion
   useEffect(() => {
+    let toastTimer: NodeJS.Timeout;
+    let cleanupTimer: NodeJS.Timeout;
+
     if (isLoading && !isBackgroundUpdate) {
       setFetchProgress(0);
       setShowProgress(true);
     } else if (!isLoading && data && !isBackgroundUpdate) {
       // Show completion toast when loading finishes and we have data
-      showToast({
-        style: Toast.Style.Success,
-        title: "Library loaded successfully",
-        message: `${data.length || 0} items available`,
-      });
-      const timer = setTimeout(() => setShowProgress(false), 1500);
-      return () => clearTimeout(timer);
+      toastTimer = setTimeout(() => {
+        showToast({
+          style: Toast.Style.Success,
+          title: "Library loaded successfully",
+          message: `${data.length || 0} items available`,
+        });
+      }, 100); // Small delay to ensure states are settled
+
+      cleanupTimer = setTimeout(() => setShowProgress(false), 1500);
     }
+
+    return () => {
+      if (toastTimer) clearTimeout(toastTimer);
+      if (cleanupTimer) clearTimeout(cleanupTimer);
+    };
   }, [isLoading, data, isBackgroundUpdate]);
 
   // Show loading toast with progress

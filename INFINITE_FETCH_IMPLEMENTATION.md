@@ -20,6 +20,16 @@
      - Using execute condition in useCachedPromise
    - ✅ Subsequent loads correctly use cache without refetching
    - ✅ Progress indicator completion fixed
+   - Potential execute condition race in development:
+     ```typescript
+     // In useYourLibrary:
+     execute: options.execute !== false && !tracksLoading;
+     // In useMySavedTracks:
+     execute: options?.execute !== false;
+     ```
+     - May cause double fetching in development
+     - Not affecting production builds
+     - Left as-is since it's dev-only
 
 2. **Loading UX Improvements**
 
@@ -29,6 +39,12 @@
    - ✅ Added rate limit error handling with user feedback
    - ✅ Generalized messages for library-wide use
    - ✅ Fixed progress completion
+   - Intermittent issue: Progress sometimes shows 100% without completion message
+     - Possible causes:
+       - Race condition between progress state and completion toast
+       - Toast timing with setTimeout
+     - Mitigation: Added cleanup timeouts
+     - Monitor for recurrence
 
 3. **Search Results Refinement**
 
