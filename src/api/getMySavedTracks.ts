@@ -26,6 +26,15 @@ const MAX_TRACKS_PER_REQUEST = 50;
 const RATE_LIMIT_DELAY = 100; // 100ms delay between requests - safer to avoid rate limits
 const BATCH_SIZE = 5; // Number of parallel requests per batch
 
+// Helper function to split array into chunks
+function chunk<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export async function getMySavedTracks({ offset = 0, fetchAll = false, onProgress }: GetMySavedTracksProps) {
   const { spotifyClient } = getSpotifyClient();
 
@@ -51,8 +60,6 @@ export async function getMySavedTracks({ offset = 0, fetchAll = false, onProgres
     let tracks = (firstBatch?.items ?? []).map(transformTrack);
 
     if (fetchAll && total > MAX_TRACKS_PER_REQUEST) {
-      console.log(`Fetching all tracks in batches (total: ${total})`);
-
       // Calculate number of additional requests needed
       const remainingTracks = total - tracks.length;
       const totalRequests = Math.ceil(remainingTracks / MAX_TRACKS_PER_REQUEST);
@@ -60,46 +67,31 @@ export async function getMySavedTracks({ offset = 0, fetchAll = false, onProgres
       // Create array of all offsets
       const allOffsets = Array.from({ length: totalRequests }, (_, i) => (i + 1) * MAX_TRACKS_PER_REQUEST);
 
-      // Split offsets into batches
-      const offsetBatches = [];
-      for (let i = 0; i < allOffsets.length; i += BATCH_SIZE) {
-        offsetBatches.push(allOffsets.slice(i, i + BATCH_SIZE));
-      }
+      // Split offsets into batches for parallel processing
+      const offsetBatches = chunk(allOffsets, BATCH_SIZE);
 
-      // Process each batch sequentially, but requests within batch run in parallel
-      for (const [batchIndex, batchOffsets] of offsetBatches.entries()) {
-        console.log(`Processing batch ${batchIndex + 1}/${offsetBatches.length}`);
+      // Process each batch in sequence
+      for (const [batchIndex, offsetBatch] of offsetBatches.entries()) {
+        // Process each offset in the batch in parallel
+        const batchResults = await Promise.all(
+          offsetBatch.map((offset) =>
+            spotifyClient.getMeTracks({ limit: MAX_TRACKS_PER_REQUEST, offset }).then((response) => {
+              const items = response?.items ?? [];
+              return items.map(transformTrack);
+            }),
+          ),
+        );
 
-        const batchPromises = batchOffsets.map((batchOffset, index) => {
-          return new Promise<MinimalTrack[]>((resolve) => {
-            (async () => {
-              // Stagger requests within batch
-              await new Promise((r) => setTimeout(r, index * RATE_LIMIT_DELAY));
+        // Add batch results to tracks array
+        tracks = [...tracks, ...batchResults.flat()];
 
-              const response = await spotifyClient.getMeTracks({
-                limit: MAX_TRACKS_PER_REQUEST,
-                offset: batchOffset,
-              });
-
-              const batchTracks = (response?.items ?? []).map(transformTrack);
-              resolve(batchTracks);
-            })();
-          });
-        });
-
-        // Wait for current batch to complete
-        const batchResults = await Promise.all(batchPromises);
-        const newTracks = batchResults.flat();
-        tracks = [...tracks, ...newTracks];
-
-        // Update progress after each batch
-        const progress = Math.round((tracks.length / total) * 100);
-        console.log(`Completed batch ${batchIndex + 1}/${offsetBatches.length} (${progress}%)`);
+        // Calculate and report progress
+        const progress = Math.round(((batchIndex + 1) / offsetBatches.length) * 100);
         onProgress?.(progress);
 
-        // Add delay between batches if not the last batch
+        // Add delay between batches to avoid rate limits
         if (batchIndex < offsetBatches.length - 1) {
-          await new Promise((r) => setTimeout(r, BATCH_SIZE * RATE_LIMIT_DELAY));
+          await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
         }
       }
     }

@@ -30,23 +30,19 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
       let cachedData;
       if (cached) {
         cachedData = JSON.parse(cached);
-        console.log("Found cached library:", cachedData.items.length, "items");
       }
 
       // Quick check for total count
       const quickCheck = await getMySavedTracks({ limit: 1, offset: 0, fetchAll: false });
-      console.log("Quick check total:", quickCheck.total);
 
       // If we have valid cache and totals match, use it
       if (cachedData && cachedData.items.length === quickCheck.total) {
-        console.log("Using cached library - totals match");
         setFetchProgress(100);
         return cachedData.items;
       }
 
       // If we have cache but totals don't match, use cache and update in background
       if (cachedData) {
-        console.log("Cache outdated, updating in background");
         setIsBackgroundUpdate(true);
         // Start background update
         getMySavedTracks({
@@ -59,7 +55,6 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
           },
         }).then(async (result) => {
           await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
-          console.log("Updated cache in background:", result.items.length);
           setBackgroundData(result.items);
           setFetchProgress(100);
 
@@ -83,7 +78,6 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
       }
 
       // No cache or invalid cache, fetch fresh
-      console.log("No cache, fetching fresh");
       const result = await getMySavedTracks({
         limit: ITEMS_PER_PAGE,
         offset: 0,
@@ -96,7 +90,6 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
 
       // Cache complete results
       await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
-      console.log("Cached fresh library:", result.items.length);
       setFetchProgress(100);
 
       return result.items;
