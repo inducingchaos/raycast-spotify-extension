@@ -26,6 +26,8 @@ export async function getMySavedTracks({
   const allTracks: SimplifiedTrackObject[] = [];
 
   try {
+    console.log("[getMySavedTracks] Starting fetch with params:", { limit, offset, fetchAll });
+
     // Initial request to get total count and first batch
     const initialResponse = await spotifyClient.getMeTracks({
       limit: Math.min(limit, MAX_TRACKS_PER_REQUEST),
@@ -33,12 +35,16 @@ export async function getMySavedTracks({
     });
 
     const total = initialResponse?.total ?? 0;
+    console.log("[getMySavedTracks] Total tracks in library:", total);
+
     const tracks = (initialResponse?.items ?? []).map((item) => ({ ...item.track }));
     allTracks.push(...tracks);
+    console.log("[getMySavedTracks] Initial batch fetched:", tracks.length);
 
     // If fetchAll is true, continue fetching until we have all tracks or hit the limit
     if (fetchAll && tracks.length === MAX_TRACKS_PER_REQUEST) {
       let currentOffset = offset + tracks.length;
+      console.log("[getMySavedTracks] Starting fetchAll from offset:", currentOffset);
 
       while (currentOffset < total && (limit ? currentOffset < limit : true)) {
         await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
@@ -50,17 +56,30 @@ export async function getMySavedTracks({
 
         const nextTracks = (response?.items ?? []).map((item) => ({ ...item.track }));
         allTracks.push(...nextTracks);
+        console.log("[getMySavedTracks] Fetched batch:", {
+          offset: currentOffset,
+          batchSize: nextTracks.length,
+          totalFetched: allTracks.length,
+          progress: `${Math.round((allTracks.length / total) * 100)}%`,
+        });
 
         if (nextTracks.length < MAX_TRACKS_PER_REQUEST) break;
         currentOffset += nextTracks.length;
       }
     }
 
-    return {
+    const result = {
       items: allTracks as SimplifiedTrackObject[],
       total,
       hasMore: total > offset + allTracks.length,
     };
+
+    console.log("[getMySavedTracks] Completed fetch:", {
+      totalFetched: allTracks.length,
+      hasMore: result.hasMore,
+    });
+
+    return result;
   } catch (err) {
     const error = getErrorMessage(err);
     console.log("getMySavedTracks.ts Error:", error);
