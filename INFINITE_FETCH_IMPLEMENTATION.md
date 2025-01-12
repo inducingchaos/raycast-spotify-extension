@@ -9,6 +9,7 @@ Investigating memory issues with track fetching. Current diagnostic approach:
 3. Keeping infinite fetch implementation for proper search functionality
 4. Implemented data minimization to reduce memory footprint
 5. Optimized hooks to prevent double fetching and unnecessary re-renders
+6. Implemented parallel fetching with staggered requests
 
 ## Memory Investigation Notes
 
@@ -18,6 +19,10 @@ Investigating memory issues with track fetching. Current diagnostic approach:
   - Wrapped progress updates in useEffect
   - Optimized dependency arrays to prevent double fetching
   - Reduced rate limit delay to 25ms (from 100ms)
+  - Parallelized track fetching with staggered requests
+    - Initial request to get total count
+    - Subsequent requests run in parallel with slight delays
+    - Progress updates per completed batch
 - Next steps:
   1. Re-enable UI components
   2. Test with larger libraries

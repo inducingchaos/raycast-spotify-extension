@@ -4,7 +4,7 @@ import { View } from "./components/View";
 import { useYourLibrary } from "./hooks/useYourLibrary";
 import { ArtistsSection } from "./components/ArtistsSection";
 import { AlbumsSection } from "./components/AlbumsSection";
-// import { TracksSection } from "./components/TracksSection"; // Temporarily disabled
+import { TracksSection } from "./components/TracksSection";
 import { PlaylistsSection } from "./components/PlaylistsSection";
 import { ShowsSection } from "./components/ShowsSection";
 import { EpisodesSection } from "./components/EpisodesSection";
@@ -18,13 +18,13 @@ const filters = {
   tracks: "Songs",
   shows: "Podcasts & Shows",
   episodes: "Episodes",
-};
+} as const;
 
 type FilterValue = keyof typeof filters;
 
 function YourLibraryCommand() {
   const [searchText, setSearchText] = useState("");
-  const [searchFilter, setSearchFilter] = useState<FilterValue>(getPreferenceValues()["Default-View"] ?? filters.all);
+  const [searchFilter, setSearchFilter] = useState<FilterValue>(getPreferenceValues()["Default-View"] ?? "all");
   const { myLibraryData, myLibraryIsLoading, tracksFetchProgress } = useYourLibrary({
     keepPreviousData: true,
   });
@@ -71,14 +71,12 @@ function YourLibraryCommand() {
                   limit={searchText ? undefined : 6}
                   artists={myLibraryData?.artists?.items}
                 />
-                {/* Temporarily disabled to isolate memory issue
                 <TracksSection
                   limit={searchText ? undefined : 6}
                   tracks={myLibraryData?.tracks?.items}
                   title="Liked Songs"
                   queueTracks
                 />
-                */}
                 <ShowsSection type="list" limit={searchText ? undefined : 6} shows={myLibraryData?.shows?.items} />
                 <EpisodesSection
                   limit={searchText ? undefined : 6}
@@ -88,11 +86,9 @@ function YourLibraryCommand() {
               </>
             )}
 
-            {/* Temporarily disabled to isolate memory issue
             {searchFilter === "tracks" && (
               <TracksSection tracks={myLibraryData?.tracks?.items} title="Liked Songs" queueTracks />
             )}
-            */}
             {searchFilter === "episodes" && (
               <EpisodesSection episodes={myLibraryData?.episodes?.items} title="Saved Episodes" />
             )}
