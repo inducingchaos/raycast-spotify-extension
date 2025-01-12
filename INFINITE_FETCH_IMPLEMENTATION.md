@@ -208,6 +208,16 @@ This implementation adds infinite fetching and caching to Spotify's library sect
        - Use useRef to track fetch state
        - Add debounce to prevent rapid re-fetches
   2. Progress indicator gets stuck at 94%
+- ✅ Fixed background update issues:
+  - Added quick check (limit=1) to validate cache
+  - Implemented stale-while-revalidate pattern:
+    - Return cached data immediately
+    - Update in background if outdated
+    - Revalidate list data when update completes
+  - Improved progress tracking:
+    - Consistent "Loading/Updating your library..." messages
+    - Proper completion states and cleanup
+    - Success toast shows final item count
 - Next steps:
   1. Implement search optimizations
   2. Add cache invalidation strategy
@@ -228,10 +238,28 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 Current implementation:
 
 - Using LocalStorage for persistent caching between command instances
-- Cache validation checks total item count
-- Only caches complete results
-- ✅ Subsequent loads correctly use cached data
-- ✅ Initial load optimized to prevent parallel fetches
+- Smart cache validation:
+  1. Quick check (limit=1) to get current total count
+  2. Compare with cached total:
+     - If match: Use cache immediately
+     - If different: Use stale cache + background update
+     - If no cache: Fetch fresh with loading UI
+- Background updates:
+  - Show "Updating your library..." progress toast
+  - Don't block UI or search functionality
+  - Success toast when update complete
+  - Properly revalidate list data when done
+- ✅ Subsequent loads use cached data instantly
+- ✅ Cache stays fresh through background validation
+- ✅ Smooth UX with no blocking operations
+
+Benefits:
+
+- Instant results from cache when available
+- Automatic background updates when library changes
+- No arbitrary cache invalidation time
+- Users always see latest data without waiting
+- Progress visibility for all operations
 
 ### Progress Tracking
 

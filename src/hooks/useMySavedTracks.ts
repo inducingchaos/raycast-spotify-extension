@@ -2,6 +2,7 @@ import { useCachedPromise } from "@raycast/utils";
 import { getMySavedTracks } from "../api/getMySavedTracks";
 import { useCallback, useEffect, useState } from "react";
 import { LocalStorage, showToast, Toast } from "@raycast/api";
+import { MinimalTrack } from "../api/getMySavedTracks";
 
 const CACHE_NAMESPACE = "spotify-library";
 const LIBRARY_CACHE_KEY = `${CACHE_NAMESPACE}-saved`;
@@ -18,26 +19,75 @@ type UseMySavedTracksProps = {
 export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracksProps = {}) {
   const [fetchProgress, setFetchProgress] = useState<number>(0);
   const [showProgress, setShowProgress] = useState(false);
+  const [isBackgroundUpdate, setIsBackgroundUpdate] = useState(false);
+  const [backgroundData, setBackgroundData] = useState<MinimalTrack[] | null>(null);
 
   // Memoize the fetch function to prevent unnecessary re-renders
   const fetchLibrary = useCallback(async () => {
     try {
       // Try to get from cache first
       const cached = await LocalStorage.getItem<string>(LIBRARY_CACHE_KEY);
+      let cachedData;
       if (cached) {
-        const parsedCache = JSON.parse(cached);
-        // Only use cache if we have all items and total matches
-        if (parsedCache.items.length === parsedCache.total) {
-          console.log("Using cached library:", parsedCache.items.length);
-          setFetchProgress(100);
-          return parsedCache.items;
-        }
+        cachedData = JSON.parse(cached);
+        console.log("Found cached library:", cachedData.items.length, "items");
       }
 
+      // Quick check for total count
+      const quickCheck = await getMySavedTracks({ limit: 1, offset: 0, fetchAll: false });
+      console.log("Quick check total:", quickCheck.total);
+
+      // If we have valid cache and totals match, use it
+      if (cachedData && cachedData.items.length === quickCheck.total) {
+        console.log("Using cached library - totals match");
+        setFetchProgress(100);
+        return cachedData.items;
+      }
+
+      // If we have cache but totals don't match, use cache and update in background
+      if (cachedData) {
+        console.log("Cache outdated, updating in background");
+        setIsBackgroundUpdate(true);
+        // Start background update
+        getMySavedTracks({
+          limit: ITEMS_PER_PAGE,
+          offset: 0,
+          fetchAll: true,
+          onProgress: (progress) => {
+            setFetchProgress(progress);
+            setShowProgress(true);
+          },
+        }).then(async (result) => {
+          await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
+          console.log("Updated cache in background:", result.items.length);
+          setBackgroundData(result.items);
+          setFetchProgress(100);
+
+          // Show completion toast
+          showToast({
+            style: Toast.Style.Success,
+            title: "Library updated",
+            message: `${result.items.length} items available`,
+          });
+
+          // Clean up states after a short delay
+          setTimeout(() => {
+            setIsBackgroundUpdate(false);
+            setShowProgress(false);
+            setFetchProgress(0);
+          }, 1500);
+        });
+
+        // Return stale cache immediately
+        return cachedData.items;
+      }
+
+      // No cache or invalid cache, fetch fresh
+      console.log("No cache, fetching fresh");
       const result = await getMySavedTracks({
         limit: ITEMS_PER_PAGE,
         offset: 0,
-        fetchAll,
+        fetchAll: true,
         onProgress: (progress) => {
           setFetchProgress(progress);
           setShowProgress(true);
@@ -46,7 +96,7 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
 
       // Cache complete results
       await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
-      console.log("Cached library:", result.items.length);
+      console.log("Cached fresh library:", result.items.length);
       setFetchProgress(100);
 
       return result.items;
@@ -66,9 +116,9 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
       }
       throw error;
     }
-  }, [fetchAll]); // Add fetchAll as dependency
+  }, [fetchAll]);
 
-  const { data, error, isLoading } = useCachedPromise(
+  const { data, error, isLoading, revalidate } = useCachedPromise(
     fetchLibrary,
     [], // No dependencies since we handle pagination internally
     {
@@ -77,12 +127,20 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
     },
   );
 
+  // Update data when background fetch completes
+  useEffect(() => {
+    if (backgroundData) {
+      revalidate();
+      setBackgroundData(null);
+    }
+  }, [backgroundData, revalidate]);
+
   // Handle loading states and completion
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading && !isBackgroundUpdate) {
       setFetchProgress(0);
       setShowProgress(true);
-    } else if (!isLoading && data) {
+    } else if (!isLoading && data && !isBackgroundUpdate) {
       // Show completion toast when loading finishes and we have data
       showToast({
         style: Toast.Style.Success,
@@ -92,23 +150,29 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
       const timer = setTimeout(() => setShowProgress(false), 1500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, data]);
+  }, [isLoading, data, isBackgroundUpdate]);
 
   // Show loading toast with progress
   useEffect(() => {
-    if (showProgress && fetchProgress > 0) {
+    if (showProgress && fetchProgress > 0 && isBackgroundUpdate) {
+      showToast({
+        style: Toast.Style.Animated,
+        title: "Updating your library...",
+        message: `${fetchProgress}% complete`,
+      });
+    } else if (showProgress && fetchProgress > 0) {
       showToast({
         style: Toast.Style.Animated,
         title: "Loading your library...",
         message: `${fetchProgress}% complete`,
       });
     }
-  }, [showProgress, fetchProgress]);
+  }, [showProgress, fetchProgress, isBackgroundUpdate]);
 
   return {
     savedTracksData: data ? { items: data, total: data.length } : undefined,
     savedTracksError: error,
-    savedTracksIsLoading: isLoading && showProgress,
+    savedTracksIsLoading: isLoading && showProgress && !isBackgroundUpdate,
     fetchProgress: isLoading ? fetchProgress : 100,
   };
 }
