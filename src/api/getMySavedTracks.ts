@@ -6,6 +6,7 @@ type GetMySavedTracksProps = {
   limit?: number;
   offset?: number;
   fetchAll?: boolean;
+  onProgress?: (progress: number) => void;
 };
 
 type GetMySavedTracksResponse = {
@@ -21,6 +22,7 @@ export async function getMySavedTracks({
   limit = MAX_TRACKS_PER_REQUEST,
   offset = 0,
   fetchAll = false,
+  onProgress,
 }: GetMySavedTracksProps = {}): Promise<GetMySavedTracksResponse> {
   const { spotifyClient } = getSpotifyClient();
   const allTracks: SimplifiedTrackObject[] = [];
@@ -41,6 +43,10 @@ export async function getMySavedTracks({
     allTracks.push(...tracks);
     console.log("[getMySavedTracks] Initial batch fetched:", tracks.length);
 
+    // Calculate and report initial progress
+    const progress = Math.round((allTracks.length / total) * 100);
+    onProgress?.(progress);
+
     // If fetchAll is true, continue fetching until we have all tracks or hit the limit
     if (fetchAll && tracks.length === MAX_TRACKS_PER_REQUEST) {
       let currentOffset = offset + tracks.length;
@@ -56,11 +62,16 @@ export async function getMySavedTracks({
 
         const nextTracks = (response?.items ?? []).map((item) => ({ ...item.track }));
         allTracks.push(...nextTracks);
+
+        // Calculate and report progress
+        const progress = Math.round((allTracks.length / total) * 100);
+        onProgress?.(progress);
+
         console.log("[getMySavedTracks] Fetched batch:", {
           offset: currentOffset,
           batchSize: nextTracks.length,
           totalFetched: allTracks.length,
-          progress: `${Math.round((allTracks.length / total) * 100)}%`,
+          progress: `${progress}%`,
         });
 
         if (nextTracks.length < MAX_TRACKS_PER_REQUEST) break;

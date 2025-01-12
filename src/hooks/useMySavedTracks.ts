@@ -1,5 +1,6 @@
 import { useCachedPromise } from "@raycast/utils";
 import { getMySavedTracks } from "../api/getMySavedTracks";
+import { useState } from "react";
 
 type UseMySavedTracksProps = {
   limit?: number;
@@ -17,8 +18,18 @@ export function useMySavedTracks({
   fetchAll = true, // Default to true since we want to cache all tracks for search
   options,
 }: UseMySavedTracksProps = {}) {
+  const [fetchProgress, setFetchProgress] = useState<number>(0);
+
   const { data, error, isLoading, revalidate } = useCachedPromise(
-    (limit?: number, offset?: number, fetchAll?: boolean) => getMySavedTracks({ limit, offset, fetchAll }),
+    async (limit?: number, offset?: number, fetchAll?: boolean) => {
+      const result = await getMySavedTracks({
+        limit,
+        offset,
+        fetchAll,
+        onProgress: (progress) => setFetchProgress(progress),
+      });
+      return result;
+    },
     [limit, offset, fetchAll],
     {
       execute: options?.execute !== false,
@@ -31,5 +42,6 @@ export function useMySavedTracks({
     savedTracksError: error,
     savedTracksIsLoading: isLoading,
     savedTracksRevalidate: revalidate,
+    fetchProgress: isLoading ? fetchProgress : 100,
   };
 }

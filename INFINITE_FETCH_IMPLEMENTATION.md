@@ -63,7 +63,10 @@ This implementation adds infinite fetching and caching to Spotify's library sect
    - Created `useMySavedTracks` hook for caching and pagination
    - Updated `useYourLibrary` to use the new hook
    - Enabled caching by default with `useCachedPromise`
-3. Add loading state improvements
+3. ✅ Add loading state improvements
+   - Added progress tracking to `getMySavedTracks`
+   - Exposed fetch progress through hooks
+   - Added progress calculation and reporting
 
 ### Phase 2: Search Enhancement
 
@@ -101,10 +104,11 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 - Reduced rate limit delay to 200ms (from 1000ms) for testing
 - Created `useMySavedTracks` hook with caching support
 - Updated `useYourLibrary` to use new hook
+- Added progress tracking for better UX
 - Next steps:
   1. Test the current implementation with the UI
-  2. Add loading state improvements
-  3. Implement search optimizations
+  2. Implement search optimizations
+  3. Add cache invalidation strategy
 
 ## TODOs
 
@@ -124,6 +128,13 @@ This implementation adds infinite fetching and caching to Spotify's library sect
   - Component is unmounted
 - Cache is preserved between command invocations
 
+### Progress Tracking
+
+- Progress is calculated based on total tracks vs fetched tracks
+- Progress is reported through hooks for UI feedback
+- Progress updates after each batch fetch
+- Progress is reset when starting a new fetch
+
 ### Usage Examples
 
 ```typescript
@@ -137,6 +148,6 @@ const { savedTracksData } = useMySavedTracks({
   fetchAll: false,
 });
 
-// With loading states
-const { savedTracksData, savedTracksIsLoading, savedTracksError } = useMySavedTracks();
+// With loading states and progress
+const { savedTracksData, savedTracksIsLoading, savedTracksError, fetchProgress } = useMySavedTracks();
 ```

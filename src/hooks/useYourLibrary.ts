@@ -12,7 +12,12 @@ type UseMyLibraryProps = {
 };
 
 export function useYourLibrary(options: UseMyLibraryProps = {}) {
-  const { savedTracksData: tracksData, savedTracksIsLoading: tracksLoading } = useMySavedTracks({
+  const {
+    savedTracksData: tracksData,
+    savedTracksIsLoading: tracksLoading,
+    fetchProgress: tracksFetchProgress,
+  } = useMySavedTracks({
+    fetchAll: true,
     options: {
       execute: options.execute !== false,
       keepPreviousData: options.keepPreviousData,
@@ -51,5 +56,6 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     },
     myLibraryError: error,
     myLibraryIsLoading: isLoading || tracksLoading,
+    tracksFetchProgress,
   };
 }
