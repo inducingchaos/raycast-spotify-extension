@@ -7,15 +7,27 @@ Investigating memory issues with track fetching. Current diagnostic approach:
 1. Temporarily disabled track-related UI components to isolate API data handling
 2. Reduced rate limit delay to 100ms for faster testing
 3. Keeping infinite fetch implementation for proper search functionality
+4. Implemented data minimization to reduce memory footprint
 
 ## Memory Investigation Notes
 
 - Memory issue occurs after fetching all tracks (~1912 tracks in 39 batches)
-- Issue persists even with UI components disabled (if confirmed)
-- Next steps:
-  1. Confirm if memory issue is purely data-related
-  2. Consider optimizing track data structure
-  3. Explore memory-efficient caching strategies
+- Initial optimization: Minimized track data structure to essential fields:
+  ```typescript
+  interface MinimalTrack {
+    id: string;
+    name: string;
+    artists: { name: string }[];
+    album: {
+      name: string;
+      images: { url: string }[];
+    };
+    uri: string;
+  }
+  ```
+- Next steps if memory issues persist:
+  1. Implement chunked caching using Raycast's Cache API
+  2. Consider moving search/filter to a separate service
 
 ## Overview
 
