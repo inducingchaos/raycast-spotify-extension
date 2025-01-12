@@ -32,7 +32,7 @@
 
 3. **Search Results Refinement**
 
-   - Inconsistent track display format between initial and search results
+   - ✅ Standardized track display format across all views
    - Performance issues with large result sets (200+ tracks)
    - Need pagination or result limiting strategy:
      ```typescript
@@ -43,10 +43,12 @@
      ```
 
 4. **UI Consistency**
-   - Standardize track display format:
-     - Initial: Title | Artists | Duration
-     - Search: Title | Artists • Album | LibraryNumber
-   - Choose and implement consistent format across all views
+   - ✅ Standardized track display format:
+     - Title | Artists | Duration (with album art)
+     - Artists shown in dimmed grey text
+     - Duration shown on the right
+   - ✅ Consistent format across all views (initial, search, and filtered results)
+   - ✅ Removed library number to focus on essential track information
 
 ## Memory Investigation Notes
 

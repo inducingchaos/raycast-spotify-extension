@@ -1,15 +1,15 @@
 import { Image, List } from "@raycast/api";
 import { MinimalTrack } from "../api/getMySavedTracks";
 import { TrackActionPanel } from "./TrackActionPanel";
+import { formatMs } from "../helpers/formatMs";
 
 interface TrackListItemProps {
   track: MinimalTrack;
-  startIndex?: number;
   showGoToAlbum?: boolean;
 }
 
-export default function TrackListItem({ track, startIndex = 0, showGoToAlbum }: TrackListItemProps) {
-  const subtitle = `${track.artists.map((a) => a.name).join(", ")} • ${track.album.name}`;
+export default function TrackListItem({ track, showGoToAlbum }: TrackListItemProps) {
+  const artists = track.artists.map((a) => a.name).join(", ");
   const icon: Image.ImageLike | undefined = track.album.images[0]?.url
     ? {
         source: track.album.images[0].url,
@@ -19,9 +19,9 @@ export default function TrackListItem({ track, startIndex = 0, showGoToAlbum }: 
   return (
     <List.Item
       title={track.name}
-      subtitle={subtitle}
+      subtitle={artists}
       icon={icon}
-      accessories={[{ text: `#${startIndex + 1}` }]}
+      accessories={[{ text: formatMs(track.duration_ms) }]}
       actions={<TrackActionPanel title={track.name} track={track} album={track.album} showGoToAlbum={showGoToAlbum} />}
     />
   );

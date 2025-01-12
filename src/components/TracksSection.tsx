@@ -16,8 +16,8 @@ export function TracksSection({ tracks, limit, title = "Songs" }: TracksSectionP
 
   return (
     <List.Section title={`${title} (${limitedTracks.length} tracks)`}>
-      {limitedTracks.map((track, index) => {
-        return <TrackListItem key={track.id} track={track} startIndex={limit ? 0 : index} />;
+      {limitedTracks.map((track) => {
+        return <TrackListItem key={track.id} track={track} />;
       })}
     </List.Section>
   );

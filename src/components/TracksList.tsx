@@ -43,6 +43,7 @@ export function TracksList({ album, playlist, tracks, showGoToAlbum }: TracksLis
       images: track.album?.images?.map((image) => ({ url: image.url ?? "" })) ?? [],
     },
     uri: track.uri ?? "",
+    duration_ms: track.duration_ms ?? 0,
   });
 
   const allTracks =
@@ -75,13 +76,8 @@ export function TracksList({ album, playlist, tracks, showGoToAlbum }: TracksLis
         }
       }}
     >
-      {currentTracks.map((track, index) => (
-        <TrackListItem
-          key={`${track.id}${startIndex + index}`}
-          track={track}
-          showGoToAlbum={showGoToAlbum}
-          startIndex={startIndex + index}
-        />
+      {currentTracks.map((track) => (
+        <TrackListItem key={`${track.id}`} track={track} showGoToAlbum={showGoToAlbum} />
       ))}
     </List>
   );

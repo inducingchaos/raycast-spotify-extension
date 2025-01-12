@@ -12,6 +12,7 @@ export interface MinimalTrack {
     images: { url: string }[];
   };
   uri: string;
+  duration_ms: number;
 }
 
 interface GetMySavedTracksProps {
@@ -44,6 +45,7 @@ export async function getMySavedTracks({ offset = 0, fetchAll = false, onProgres
         images: item.track?.album?.images?.map((image) => ({ url: image.url ?? "" })) ?? [],
       },
       uri: item.track?.uri ?? "",
+      duration_ms: item.track?.duration_ms ?? 0,
     });
 
     let tracks = (firstBatch?.items ?? []).map(transformTrack);
