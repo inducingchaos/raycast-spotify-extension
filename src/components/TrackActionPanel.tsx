@@ -1,5 +1,10 @@
-import { Action, ActionPanel } from "@raycast/api";
+import { Action, ActionPanel, Icon } from "@raycast/api";
 import { MinimalTrack } from "../api/getMySavedTracks";
+import { FooterAction } from "./FooterAction";
+import { PlayAction } from "./PlayAction";
+import { StartRadioAction } from "./StartRadioAction";
+import { AddToSavedTracksAction } from "./AddToSavedTracksAction";
+import { TracksList } from "./TracksList";
 
 interface TrackActionPanelProps {
   title: string;
@@ -12,19 +17,28 @@ export function TrackActionPanel({ title, track, album, showGoToAlbum }: TrackAc
   return (
     <ActionPanel title={title}>
       <ActionPanel.Section>
-        <Action.OpenInBrowser
-          title="Open in Spotify"
-          url={`spotify:track:${track.id}`}
-          shortcut={{ modifiers: ["cmd"], key: "o" }}
-        />
+        <PlayAction id={track.id} type="track" />
+        <AddToSavedTracksAction trackId={track.id} />
+        <StartRadioAction trackId={track.id} />
         {showGoToAlbum && (
-          <Action.OpenInBrowser
+          <Action.Push
+            icon={Icon.AppWindowGrid3x3}
             title="Go to Album"
-            url={`spotify:album:${album.id}`}
             shortcut={{ modifiers: ["cmd", "shift"], key: "a" }}
+            target={
+              <TracksList
+                album={{
+                  id: album.id,
+                  name: album.name,
+                  images: album.images,
+                }}
+                showGoToAlbum={false}
+              />
+            }
           />
         )}
       </ActionPanel.Section>
+      <FooterAction url={`https://open.spotify.com/track/${track.id}`} uri={track.uri} title={title} />
     </ActionPanel>
   );
 }

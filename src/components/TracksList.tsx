@@ -1,5 +1,5 @@
 import { List } from "@raycast/api";
-import { SimplifiedAlbumObject, SimplifiedPlaylistObject, SimplifiedTrackObject } from "../helpers/spotify.api";
+import { SimplifiedPlaylistObject, SimplifiedTrackObject } from "../helpers/spotify.api";
 import { useAlbumTracks } from "../hooks/useAlbumTracks";
 import { usePlaylistTracks } from "../hooks/usePlaylistTracks";
 import TrackListItem from "./TrackListItem";
@@ -8,8 +8,14 @@ import { MinimalTrack } from "../api/getMySavedTracks";
 
 const TRACKS_PER_PAGE = 50;
 
+type MinimalAlbum = {
+  id: string;
+  name: string;
+  images: { url: string }[];
+};
+
 type TracksListProps = {
-  album?: SimplifiedAlbumObject;
+  album?: MinimalAlbum;
   playlist?: SimplifiedPlaylistObject;
   tracks?: MinimalTrack[];
   showGoToAlbum?: boolean;

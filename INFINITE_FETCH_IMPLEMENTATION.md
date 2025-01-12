@@ -321,3 +321,32 @@ Chose to keep Raycast's built-in filtering with no result limiting because:
 - Shows all matching results (no artificial limits)
 - Caches full dataset for quick subsequent searches
 - Maintains best possible search experience for users
+
+## UI Improvements
+
+### Track Actions
+
+- Standardized track actions to match Artists and Playlists menus
+- Added primary actions:
+  - Play (default action)
+  - Add to Saved Tracks
+  - Start Radio
+  - Go to Album (with keyboard shortcut)
+- Added footer action to open in Spotify
+- Simplified album type to only include required properties (id, name, images)
+- Ensured consistent behavior across all library sections
+
+### Display Format
+
+- Standardized track display format: "Title | Artists | Duration"
+- Artists shown in dimmed grey text
+- Duration aligned to right
+- Album art as icon
+- Limited display to 6 items while maintaining Raycast's native search
+
+### Next Steps
+
+- Consider adding more actions like "Copy URL" if needed
+- Test keyboard shortcuts for all actions
+- Verify consistent behavior with other sections
+- Document keyboard shortcuts in README
