@@ -9,21 +9,25 @@
 - Parallel fetching with staggered requests working
 - Memory optimization through data minimization
 - Progress tracking with visual feedback
+- ✅ Persistent caching between command instances working
 
 ### Remaining Issues
 
 1. **Fetch Optimization**
 
-   - Double fetching occurring (during loading and after initial results)
-   - Cache persistence between command instances needs improvement
-   - Need to investigate alternative caching strategies
+   - Initial load triggers parallel fetches (double loading)
+   - Progress indicator gets stuck at 94% and doesn't complete
+   - Need to investigate why useCachedPromise triggers parallel fetches during initial load
+   - ✅ Subsequent loads correctly use cache without refetching
 
 2. **Loading UX Improvements**
 
    - ✅ Added progress information during initial load
    - ✅ Added loading toasts with progress percentage
-   - ✅ Added completion toast when loading finishes
+   - ✅ Added completion toast with track count
    - ✅ Added rate limit error handling with user feedback
+   - ✅ Generalized messages for library-wide use
+   - Need to fix progress completion getting stuck at 94%
 
 3. **Search Results Refinement**
 
@@ -186,6 +190,18 @@ This implementation adds infinite fetching and caching to Spotify's library sect
   2. Implement search optimizations
   3. Add cache invalidation strategy
 
+### 2024-03-22
+
+- ✅ Successfully implemented persistent caching between command instances
+- ✅ Cache validation working - subsequent loads use cached data
+- Identified issues:
+  1. Initial load triggers parallel fetches
+  2. Progress indicator gets stuck at 94%
+- Next steps:
+  1. Fix parallel fetching during initial load
+  2. Fix progress indicator completion
+  3. Implement search optimizations
+
 ## TODOs
 
 - [ ] Remove debug console.logs before PR
@@ -197,19 +213,22 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 
 ### Caching Strategy
 
-- Using Raycast's built-in `useCachedPromise` for automatic caching
-- Cache is invalidated automatically when:
-  - Dependencies change (limit, offset, fetchAll)
-  - Revalidate is called
-  - Component is unmounted
-- Cache is preserved between command invocations
+Current implementation:
+
+- Using LocalStorage for persistent caching between command instances
+- Cache validation checks total track count
+- Only caches complete results
+- Subsequent loads correctly use cached data
+- Initial load still needs optimization to prevent parallel fetches
 
 ### Progress Tracking
 
-- Progress is calculated based on total tracks vs fetched tracks
-- Progress is reported through hooks for UI feedback
+Current implementation:
+
+- Progress calculated based on total tracks vs fetched tracks
 - Progress updates after each batch fetch
-- Progress is reset when starting a new fetch
+- Known issue: Gets stuck at 94% and doesn't complete
+- Need to investigate progress calculation and completion logic
 
 ### Usage Examples
 
