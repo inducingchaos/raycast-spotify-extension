@@ -15,8 +15,9 @@
 
 1. **Fetch Optimization**
 
-   - Initial load triggers parallel fetches (double loading)
-   - Need to investigate why useCachedPromise triggers parallel fetches during initial load
+   - ✅ Fixed parallel fetching during initial load by:
+     - Making library data fetch wait for tracks to complete
+     - Using execute condition in useCachedPromise
    - ✅ Subsequent loads correctly use cache without refetching
    - ✅ Progress indicator completion fixed
 
@@ -195,12 +196,20 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 - ✅ Successfully implemented persistent caching between command instances
 - ✅ Cache validation working - subsequent loads use cached data
 - Identified issues:
-  1. Initial load triggers parallel fetches
+  1. Initial load triggers parallel fetches (investigated but not resolved)
+     - Potential causes:
+       - useCachedPromise re-execution on tracksLoading changes
+       - Race condition with execute conditions
+       - Interaction between useYourLibrary and useMySavedTracks hooks
+     - Possible solutions to explore later:
+       - Consolidate fetching into a single useCachedPromise call
+       - Use useRef to track fetch state
+       - Add debounce to prevent rapid re-fetches
   2. Progress indicator gets stuck at 94%
 - Next steps:
-  1. Fix parallel fetching during initial load
-  2. Fix progress indicator completion
-  3. Implement search optimizations
+  1. Implement search optimizations
+  2. Add cache invalidation strategy
+  3. Revisit double fetching issue after core functionality is stable
 
 ## TODOs
 
@@ -208,6 +217,7 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 - [ ] Document usage of `getMySavedTracks` for other implementations
 - [ ] Add tests for pagination and rate limiting
 - [ ] Create example implementation for other library sections
+- [ ] Investigate and fix double fetching issue
 
 ## Implementation Notes
 
@@ -218,8 +228,8 @@ Current implementation:
 - Using LocalStorage for persistent caching between command instances
 - Cache validation checks total item count
 - Only caches complete results
-- Subsequent loads correctly use cached data
-- Initial load still needs optimization to prevent parallel fetches
+- ✅ Subsequent loads correctly use cached data
+- ✅ Initial load optimized to prevent parallel fetches
 
 ### Progress Tracking
 

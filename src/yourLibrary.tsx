@@ -67,6 +67,7 @@ function YourLibraryCommand() {
                   type="list"
                   limit={searchText ? undefined : 6}
                   playlists={myLibraryData?.playlists?.items}
+                  tracks={myLibraryData?.tracks}
                 />
                 <AlbumsSection type="list" limit={searchText ? undefined : 6} albums={myLibraryData?.albums?.items} />
                 <ArtistsSection

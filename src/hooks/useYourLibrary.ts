@@ -74,6 +74,8 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     isLoading,
   } = useCachedPromise(fetchLibraryData, [], {
     keepPreviousData: options.keepPreviousData,
+    // Only execute after tracks are loaded
+    execute: options.execute !== false && !tracksLoading,
   });
 
   const [playlistsData, albumsData, artistsData, showsData, episodesData] = data;
@@ -82,7 +84,13 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     playlists: playlistsData,
     albums: albumsData,
     artists: artistsData,
-    tracks: tracksData,
+    tracks: tracksData
+      ? {
+          items: tracksData.items,
+          total: tracksData.total,
+          hasMore: false,
+        }
+      : undefined,
     shows: showsData,
     episodes: episodesData,
   };
