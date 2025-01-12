@@ -2,16 +2,44 @@
 
 ## Current Status
 
-Investigating memory issues with track fetching. Current diagnostic approach:
+✅ Initial implementation successful:
 
-1. Temporarily disabled track-related UI components to isolate API data handling
-2. Reduced rate limit delay to 25ms for faster testing
-3. Keeping infinite fetch implementation for proper search functionality
-4. Implemented data minimization to reduce memory footprint
-5. Optimized hooks to prevent double fetching and unnecessary re-renders
-6. Implemented parallel fetching with staggered requests
-7. Added type safety improvements and simplified UI components
-8. Unified track data structure across components
+- Infinite fetching works with proper rate limiting
+- Search functionality correctly filters songs
+- Parallel fetching with staggered requests working
+- Memory optimization through data minimization
+
+### Remaining Issues
+
+1. **Fetch Optimization**
+
+   - Double fetching occurring (during loading and after initial results)
+   - Cache not persisting between command instances
+   - Need to implement proper cache usage with `useCachedPromise`
+
+2. **Loading UX Improvements**
+
+   - Add progress information during initial load
+   - Replace generic loading bar with track count progress
+   - Show toast for rate limit errors (following Raycast best practices)
+
+3. **Search Results Refinement**
+
+   - Inconsistent track display format between initial and search results
+   - Performance issues with large result sets (200+ tracks)
+   - Need pagination or result limiting strategy:
+     ```typescript
+     // Proposed approach:
+     - Limit initial search results (10-50 tracks)
+     - Add "Refine your search to see more results" message
+     - Consider section-based pagination
+     ```
+
+4. **UI Consistency**
+   - Standardize track display format:
+     - Initial: Title | Artists | Duration
+     - Search: Title | Artists • Album | LibraryNumber
+   - Choose and implement consistent format across all views
 
 ## Memory Investigation Notes
 
