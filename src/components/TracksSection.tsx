@@ -12,14 +12,15 @@ type TracksSectionProps = {
 export function TracksSection({ tracks, limit, title = "Songs", queueTracks }: TracksSectionProps) {
   if (!tracks) return null;
 
-  const items = tracks.slice(0, limit || tracks.length);
+  // If limit is specified, only show that many tracks
+  const limitedTracks = limit ? tracks.slice(0, limit) : tracks;
 
   return (
-    <List.Section title={title}>
-      {items?.map((track) => {
+    <List.Section title={`${title} (${limitedTracks.length} tracks)`}>
+      {limitedTracks.map((track, index) => {
         return (
           <TrackListItem
-            key={track.id}
+            key={`${track.id}-${index}`}
             track={track}
             album={track.album}
             showAddToSaved

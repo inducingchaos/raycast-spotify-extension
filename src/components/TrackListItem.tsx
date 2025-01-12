@@ -10,6 +10,7 @@ type TrackListItemProps = {
   showGoToAlbum?: boolean;
   playingContext?: string;
   tracksToQueue?: SimplifiedTrackObject[];
+  id?: string;
 };
 
 export default function TrackListItem({
@@ -19,6 +20,7 @@ export default function TrackListItem({
   showGoToAlbum,
   playingContext,
   tracksToQueue,
+  id,
 }: TrackListItemProps) {
   const title = track.name || "";
   const subtitle = track?.artists?.map((a) => a.name).join(", ");
@@ -32,6 +34,7 @@ export default function TrackListItem({
 
   return (
     <List.Item
+      id={id}
       icon={icon}
       title={title}
       subtitle={subtitle}

@@ -4,7 +4,7 @@ import { View } from "./components/View";
 import { useYourLibrary } from "./hooks/useYourLibrary";
 import { ArtistsSection } from "./components/ArtistsSection";
 import { AlbumsSection } from "./components/AlbumsSection";
-import { TracksSection } from "./components/TracksSection";
+// import { TracksSection } from "./components/TracksSection"; // Temporarily disabled
 import { PlaylistsSection } from "./components/PlaylistsSection";
 import { ShowsSection } from "./components/ShowsSection";
 import { EpisodesSection } from "./components/EpisodesSection";
@@ -25,7 +25,7 @@ type FilterValue = keyof typeof filters;
 function YourLibraryCommand() {
   const [searchText, setSearchText] = useState("");
   const [searchFilter, setSearchFilter] = useState<FilterValue>(getPreferenceValues()["Default-View"] ?? filters.all);
-  const { myLibraryData, myLibraryIsLoading } = useYourLibrary({
+  const { myLibraryData, myLibraryIsLoading, tracksFetchProgress } = useYourLibrary({
     keepPreviousData: true,
   });
 
@@ -37,12 +37,7 @@ function YourLibraryCommand() {
     filtering: true,
   };
 
-  if (
-    searchFilter === "all" ||
-    searchFilter === "tracks" ||
-    searchFilter === "playlists" ||
-    searchFilter === "episodes"
-  ) {
+  if (searchFilter === "all" || searchFilter === "playlists" || searchFilter === "episodes") {
     return (
       <List
         {...sharedProps}
@@ -58,38 +53,55 @@ function YourLibraryCommand() {
           </List.Dropdown>
         }
       >
-        {searchFilter === "all" && (
+        {myLibraryIsLoading && tracksFetchProgress < 100 && (
+          <List.EmptyView title={`Loading your library... ${tracksFetchProgress}%`} />
+        )}
+        {!myLibraryIsLoading && (
           <>
-            <PlaylistsSection
-              type="list"
-              limit={searchText ? undefined : 6}
-              playlists={myLibraryData?.playlists?.items}
-            />
-            <AlbumsSection type="list" limit={searchText ? undefined : 6} albums={myLibraryData?.albums?.items} />
-            <ArtistsSection type="list" limit={searchText ? undefined : 6} artists={myLibraryData?.artists?.items} />
-            <TracksSection
-              limit={searchText ? undefined : 6}
-              tracks={myLibraryData?.tracks?.items}
-              title="Liked Songs"
-              queueTracks
-            />
-            <ShowsSection type="list" limit={searchText ? undefined : 6} shows={myLibraryData?.shows?.items} />
-            <EpisodesSection
-              limit={searchText ? undefined : 6}
-              episodes={myLibraryData?.episodes?.items}
-              title="Saved Episodes"
-            />
+            {searchFilter === "all" && (
+              <>
+                <PlaylistsSection
+                  type="list"
+                  limit={searchText ? undefined : 6}
+                  playlists={myLibraryData?.playlists?.items}
+                />
+                <AlbumsSection type="list" limit={searchText ? undefined : 6} albums={myLibraryData?.albums?.items} />
+                <ArtistsSection
+                  type="list"
+                  limit={searchText ? undefined : 6}
+                  artists={myLibraryData?.artists?.items}
+                />
+                {/* Temporarily disabled to isolate memory issue
+                <TracksSection
+                  limit={searchText ? undefined : 6}
+                  tracks={myLibraryData?.tracks?.items}
+                  title="Liked Songs"
+                  queueTracks
+                />
+                */}
+                <ShowsSection type="list" limit={searchText ? undefined : 6} shows={myLibraryData?.shows?.items} />
+                <EpisodesSection
+                  limit={searchText ? undefined : 6}
+                  episodes={myLibraryData?.episodes?.items}
+                  title="Saved Episodes"
+                />
+              </>
+            )}
+
+            {/* Temporarily disabled to isolate memory issue
+            {searchFilter === "tracks" && (
+              <TracksSection tracks={myLibraryData?.tracks?.items} title="Liked Songs" queueTracks />
+            )}
+            */}
+            {searchFilter === "episodes" && (
+              <EpisodesSection episodes={myLibraryData?.episodes?.items} title="Saved Episodes" />
+            )}
+
+            {searchFilter === "playlists" && (
+              <PlaylistsSection type="list" playlists={myLibraryData?.playlists?.items} />
+            )}
           </>
         )}
-
-        {searchFilter === "tracks" && (
-          <TracksSection tracks={myLibraryData?.tracks?.items} title="Liked Songs" queueTracks />
-        )}
-        {searchFilter === "episodes" && (
-          <EpisodesSection episodes={myLibraryData?.episodes?.items} title="Saved Episodes" />
-        )}
-
-        {searchFilter === "playlists" && <PlaylistsSection type="list" playlists={myLibraryData?.playlists?.items} />}
       </List>
     );
   }

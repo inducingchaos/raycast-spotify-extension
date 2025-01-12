@@ -1,5 +1,22 @@
 # Spotify Library Infinite Fetch Implementation
 
+## Current Status
+
+Investigating memory issues with track fetching. Current diagnostic approach:
+
+1. Temporarily disabled track-related UI components to isolate API data handling
+2. Reduced rate limit delay to 100ms for faster testing
+3. Keeping infinite fetch implementation for proper search functionality
+
+## Memory Investigation Notes
+
+- Memory issue occurs after fetching all tracks (~1912 tracks in 39 batches)
+- Issue persists even with UI components disabled (if confirmed)
+- Next steps:
+  1. Confirm if memory issue is purely data-related
+  2. Consider optimizing track data structure
+  3. Explore memory-efficient caching strategies
+
 ## Overview
 
 This implementation adds infinite fetching and caching to Spotify's library sections, starting with tracks. This pattern can be applied to other library sections (playlists, albums, etc.) in the future.

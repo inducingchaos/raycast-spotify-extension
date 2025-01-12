@@ -15,7 +15,7 @@ type GetMySavedTracksResponse = {
   hasMore: boolean;
 };
 
-const RATE_LIMIT_DELAY = 200; // 200ms delay between requests - adjusted for testing
+const RATE_LIMIT_DELAY = 100; // 100ms delay between requests - adjusted for testing
 const MAX_TRACKS_PER_REQUEST = 50;
 
 export async function getMySavedTracks({
@@ -48,11 +48,11 @@ export async function getMySavedTracks({
     onProgress?.(progress);
 
     // If fetchAll is true, continue fetching until we have all tracks or hit the limit
-    if (fetchAll && tracks.length === MAX_TRACKS_PER_REQUEST) {
+    if (fetchAll && tracks.length > 0) {
       let currentOffset = offset + tracks.length;
       console.log("[getMySavedTracks] Starting fetchAll from offset:", currentOffset);
 
-      while (currentOffset < total && (limit ? currentOffset < limit : true)) {
+      while (currentOffset < total) {
         await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
 
         const response = await spotifyClient.getMeTracks({
@@ -61,6 +61,8 @@ export async function getMySavedTracks({
         });
 
         const nextTracks = (response?.items ?? []).map((item) => ({ ...item.track }));
+        if (nextTracks.length === 0) break;
+
         allTracks.push(...nextTracks);
 
         // Calculate and report progress
@@ -74,7 +76,6 @@ export async function getMySavedTracks({
           progress: `${progress}%`,
         });
 
-        if (nextTracks.length < MAX_TRACKS_PER_REQUEST) break;
         currentOffset += nextTracks.length;
       }
     }
