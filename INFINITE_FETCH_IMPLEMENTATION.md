@@ -1,4 +1,8 @@
-# Spotify Library Track Pagination Implementation
+# Spotify Library Infinite Fetch Implementation
+
+## Overview
+
+This implementation adds infinite fetching and caching to Spotify's library sections, starting with tracks. This pattern can be applied to other library sections (playlists, albums, etc.) in the future.
 
 ## Current Issues
 
@@ -94,3 +98,10 @@
   1. Test the current implementation with the UI
   2. Implement caching layer
   3. Add progressive loading UI improvements
+
+## TODOs
+
+- [ ] Remove debug console.logs before PR
+- [ ] Document usage of `getMySavedTracks` for other implementations
+- [ ] Add tests for pagination and rate limiting
+- [ ] Create example implementation for other library sections
