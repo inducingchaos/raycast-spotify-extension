@@ -374,7 +374,47 @@ Chose to keep Raycast's built-in filtering with no result limiting because:
 
 ### Next Steps
 
-- Consider adding more actions like "Copy URL" if needed
-- Test keyboard shortcuts for all actions
-- Verify consistent behavior with other sections
-- Document keyboard shortcuts in README
+1. **Investigate Double Loading**
+
+   - Track down source of duplicate fetches
+   - Potential causes:
+     - Double mounting of components
+     - Multiple function calls
+     - Hook dependency issues
+   - Add debug logging to trace fetch calls
+
+2. **Add Manual Refresh**
+
+   - Add "Refresh Library" action with Cmd+R shortcut
+   - Show in menu bar during results view
+   - Add to main command selection screen
+   - Clear cache and trigger fresh fetch
+   - Show loading progress as normal
+
+3. **Improve Cache Information**
+
+   - Add last updated timestamp to cache
+   - Show in success toast:
+     - "HH:mm" if within current day
+     - "YYYY-MM-DD" if different day
+   - Consider showing in UI during results view
+
+4. **Code Cleanup**
+   - Remove all debug console.logs
+   - Clean up unused code
+   - Add comments for complex logic
+   - Document hook usage
+
+### Performance Notes
+
+- ✅ Batching already implemented in `getMySavedTracks`:
+  - Parallel fetching with 5 requests per batch
+  - 25ms delay between batches
+  - Rate limit handling working well
+- Memory optimizations working:
+  - Minimal data structure
+  - Efficient caching
+  - No unnecessary re-renders
+- Remaining issue:
+  - Double loading of tracks needs investigation
+  - May impact initial load performance
