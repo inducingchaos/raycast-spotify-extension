@@ -2,9 +2,9 @@ import { useCachedPromise } from "@raycast/utils";
 import { getUserPlaylists } from "../api/getUserPlaylists";
 import { getMySavedAlbums } from "../api/getMySavedAlbums";
 import { getFollowedArtists } from "../api/getFollowedArtists";
-import { getMySavedTracks } from "../api/getMySavedTracks";
 import { getMySavedShows } from "../api/getMySavedShows";
 import { getMySavedEpisodes } from "../api/getMySavedEpisodes";
+import { useMySavedTracks } from "./useMySavedTracks";
 
 type UseMyLibraryProps = {
   execute?: boolean;
@@ -12,6 +12,13 @@ type UseMyLibraryProps = {
 };
 
 export function useYourLibrary(options: UseMyLibraryProps = {}) {
+  const { savedTracksData: tracksData, savedTracksIsLoading: tracksLoading } = useMySavedTracks({
+    options: {
+      execute: options.execute !== false,
+      keepPreviousData: options.keepPreviousData,
+    },
+  });
+
   const {
     data = [],
     error,
@@ -22,17 +29,16 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
         getUserPlaylists(),
         getMySavedAlbums(),
         getFollowedArtists(),
-        getMySavedTracks(),
         getMySavedShows(),
         getMySavedEpisodes(),
       ]),
     [],
     {
-      keepPreviousData: options?.keepPreviousData,
+      keepPreviousData: options.keepPreviousData,
     },
   );
 
-  const [playlistsData, albumsData, artistsData, tracksData, showsData, episodesData] = data;
+  const [playlistsData, albumsData, artistsData, showsData, episodesData] = data;
 
   return {
     myLibraryData: {
@@ -44,6 +50,6 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
       episodes: episodesData,
     },
     myLibraryError: error,
-    myLibraryIsLoading: isLoading,
+    myLibraryIsLoading: isLoading || tracksLoading,
   };
 }

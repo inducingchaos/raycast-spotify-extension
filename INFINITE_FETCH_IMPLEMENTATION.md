@@ -59,7 +59,10 @@ This implementation adds infinite fetching and caching to Spotify's library sect
    - Implemented fetchAll option with rate limiting
    - Added debug logging for testing
    - Reduced rate limit delay to 200ms for testing
-2. Implement progressive loading in UI
+2. ✅ Implement progressive loading in UI
+   - Created `useMySavedTracks` hook for caching and pagination
+   - Updated `useYourLibrary` to use the new hook
+   - Enabled caching by default with `useCachedPromise`
 3. Add loading state improvements
 
 ### Phase 2: Search Enhancement
@@ -70,7 +73,9 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 
 ### Phase 3: Caching
 
-1. Implement caching layer
+1. ✅ Implement caching layer
+   - Using Raycast's `useCachedPromise` for automatic caching
+   - Cache invalidation handled by Raycast
 2. Add cache invalidation strategy
 3. Handle edge cases (deletions, additions)
 
@@ -94,10 +99,12 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 - Implemented basic pagination in `getMySavedTracks.ts`
 - Added debug logging for testing and monitoring
 - Reduced rate limit delay to 200ms (from 1000ms) for testing
+- Created `useMySavedTracks` hook with caching support
+- Updated `useYourLibrary` to use new hook
 - Next steps:
   1. Test the current implementation with the UI
-  2. Implement caching layer
-  3. Add progressive loading UI improvements
+  2. Add loading state improvements
+  3. Implement search optimizations
 
 ## TODOs
 
@@ -105,3 +112,31 @@ This implementation adds infinite fetching and caching to Spotify's library sect
 - [ ] Document usage of `getMySavedTracks` for other implementations
 - [ ] Add tests for pagination and rate limiting
 - [ ] Create example implementation for other library sections
+
+## Implementation Notes
+
+### Caching Strategy
+
+- Using Raycast's built-in `useCachedPromise` for automatic caching
+- Cache is invalidated automatically when:
+  - Dependencies change (limit, offset, fetchAll)
+  - Revalidate is called
+  - Component is unmounted
+- Cache is preserved between command invocations
+
+### Usage Examples
+
+```typescript
+// Basic usage with default caching
+const { savedTracksData } = useMySavedTracks();
+
+// Paginated usage
+const { savedTracksData } = useMySavedTracks({
+  limit: 50,
+  offset: 100,
+  fetchAll: false,
+});
+
+// With loading states
+const { savedTracksData, savedTracksIsLoading, savedTracksError } = useMySavedTracks();
+```
