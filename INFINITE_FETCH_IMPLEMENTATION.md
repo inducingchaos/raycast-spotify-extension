@@ -8,20 +8,22 @@
 - Search functionality correctly filters songs
 - Parallel fetching with staggered requests working
 - Memory optimization through data minimization
+- Progress tracking with visual feedback
 
 ### Remaining Issues
 
 1. **Fetch Optimization**
 
    - Double fetching occurring (during loading and after initial results)
-   - Cache not persisting between command instances
-   - Need to implement proper cache usage with `useCachedPromise`
+   - Cache persistence between command instances needs improvement
+   - Need to investigate alternative caching strategies
 
 2. **Loading UX Improvements**
 
-   - Add progress information during initial load
-   - Replace generic loading bar with track count progress
-   - Show toast for rate limit errors (following Raycast best practices)
+   - ✅ Added progress information during initial load
+   - ✅ Added loading toasts with progress percentage
+   - ✅ Added completion toast when loading finishes
+   - ✅ Added rate limit error handling with user feedback
 
 3. **Search Results Refinement**
 
