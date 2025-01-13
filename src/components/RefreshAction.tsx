@@ -1,16 +1,17 @@
 import { Action, Icon } from "@raycast/api";
 
-type RefreshActionProps = {
+interface RefreshActionProps {
   onRefresh: () => void;
-};
+  simpleText?: boolean;
+}
 
-export function RefreshAction({ onRefresh }: RefreshActionProps) {
+export function RefreshAction({ onRefresh, simpleText }: RefreshActionProps) {
   return (
     <Action
       icon={Icon.ArrowClockwise}
-      title="Refresh Library"
-      shortcut={{ modifiers: ["cmd"], key: "r" }}
+      title={simpleText ? "Refresh" : "Refresh Library"}
       onAction={onRefresh}
+      shortcut={{ modifiers: ["cmd"], key: "r" }}
     />
   );
 }

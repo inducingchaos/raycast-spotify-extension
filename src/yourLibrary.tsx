@@ -1,5 +1,5 @@
 import { ComponentProps, memo, useState } from "react";
-import { Grid, List, getPreferenceValues } from "@raycast/api";
+import { Grid, List, getPreferenceValues, ActionPanel } from "@raycast/api";
 import { View } from "./components/View";
 import { useYourLibrary } from "./hooks/useYourLibrary";
 import { ArtistsSection } from "./components/ArtistsSection";
@@ -8,6 +8,7 @@ import { TracksSection } from "./components/TracksSection";
 import { PlaylistsSection } from "./components/PlaylistsSection";
 import { ShowsSection } from "./components/ShowsSection";
 import { EpisodesSection } from "./components/EpisodesSection";
+import { RefreshAction } from "./components/RefreshAction";
 import { MinimalTrack } from "./api/getMySavedTracks";
 import type {
   SimplifiedPlaylistObject,
@@ -117,7 +118,7 @@ const AllSections = memo(({ data, searchText, onRefresh }: AllSectionsProps) => 
 function YourLibraryCommand() {
   const [searchText, setSearchText] = useState("");
   const [searchFilter, setSearchFilter] = useState<FilterValue>(getPreferenceValues()["Default-View"] ?? "all");
-  const { myLibraryData, myLibraryIsLoading, tracksFetchProgress, revalidate } = useYourLibrary({
+  const { myLibraryData, myLibraryIsLoading, revalidate } = useYourLibrary({
     keepPreviousData: true,
   });
 
@@ -132,15 +133,30 @@ function YourLibraryCommand() {
   const showList =
     searchFilter === "all" || searchFilter === "playlists" || searchFilter === "tracks" || searchFilter === "episodes";
 
+  // Show refresh action when no tracks exist or when searching with no results
+  const showRefreshAction =
+    !myLibraryIsLoading &&
+    (!myLibraryData?.tracks?.items?.length ||
+      (searchText &&
+        !myLibraryData?.tracks?.items?.some(
+          (track) =>
+            track.name.toLowerCase().includes(searchText.toLowerCase()) ||
+            track.artists.some((artist) => artist.name.toLowerCase().includes(searchText.toLowerCase())),
+        )));
+
   if (showList) {
     return (
       <List
         {...sharedProps}
         searchBarAccessory={<ListFilterDropdown value={searchFilter} onChange={setSearchFilter} />}
+        actions={
+          showRefreshAction ? (
+            <ActionPanel>
+              <RefreshAction onRefresh={revalidate} simpleText />
+            </ActionPanel>
+          ) : undefined
+        }
       >
-        {myLibraryIsLoading && tracksFetchProgress < 100 && (
-          <List.EmptyView title={`Loading your library... ${tracksFetchProgress}%`} />
-        )}
         {!myLibraryIsLoading && (
           <>
             {searchFilter === "all" && (
