@@ -48,6 +48,7 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     savedTracksData: tracksData,
     savedTracksIsLoading: tracksLoading,
     fetchProgress: tracksFetchProgress,
+    revalidate: revalidateTracks,
   } = useMySavedTracks({
     fetchAll: true,
     options: {
@@ -72,6 +73,7 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     data = [],
     error,
     isLoading,
+    revalidate: revalidateLibrary,
   } = useCachedPromise(fetchLibraryData, [], {
     keepPreviousData: options.keepPreviousData,
     // Only execute after tracks are loaded
@@ -95,10 +97,15 @@ export function useYourLibrary(options: UseMyLibraryProps = {}) {
     episodes: episodesData,
   };
 
+  const revalidate = useCallback(async () => {
+    await Promise.all([revalidateTracks(), revalidateLibrary()]);
+  }, [revalidateTracks, revalidateLibrary]);
+
   return {
     myLibraryData,
     myLibraryError: error,
     myLibraryIsLoading: isLoading || tracksLoading,
     tracksFetchProgress,
+    revalidate,
   };
 }

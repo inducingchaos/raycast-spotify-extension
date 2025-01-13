@@ -6,9 +6,10 @@ type TracksSectionProps = {
   tracks: MinimalTrack[] | undefined;
   limit?: number;
   title?: string;
+  onRefresh?: () => void;
 };
 
-export function TracksSection({ tracks, limit, title = "Songs" }: TracksSectionProps) {
+export function TracksSection({ tracks, limit, title = "Songs", onRefresh }: TracksSectionProps) {
   if (!tracks) return null;
 
   // If limit is specified, only show that many tracks
@@ -17,7 +18,7 @@ export function TracksSection({ tracks, limit, title = "Songs" }: TracksSectionP
   return (
     <List.Section title={`${title} (${limitedTracks.length} tracks)`}>
       {limitedTracks.map((track) => {
-        return <TrackListItem key={track.id} track={track} />;
+        return <TrackListItem key={track.id} track={track} onRefresh={onRefresh} />;
       })}
     </List.Section>
   );

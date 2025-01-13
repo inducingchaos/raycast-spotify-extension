@@ -177,5 +177,6 @@ export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracks
     savedTracksError: error,
     savedTracksIsLoading: isLoading && showProgress && !isBackgroundUpdate,
     fetchProgress: isLoading ? fetchProgress : 100,
+    revalidate,
   };
 }

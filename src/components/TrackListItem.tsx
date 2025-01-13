@@ -6,9 +6,10 @@ import { formatMs } from "../helpers/formatMs";
 interface TrackListItemProps {
   track: MinimalTrack;
   showGoToAlbum?: boolean;
+  onRefresh?: () => void;
 }
 
-export default function TrackListItem({ track, showGoToAlbum }: TrackListItemProps) {
+export default function TrackListItem({ track, showGoToAlbum, onRefresh }: TrackListItemProps) {
   const artists = track.artists.map((a) => a.name).join(", ");
   const icon: Image.ImageLike | undefined = track.album.images[0]?.url
     ? {
@@ -22,7 +23,15 @@ export default function TrackListItem({ track, showGoToAlbum }: TrackListItemPro
       subtitle={artists}
       icon={icon}
       accessories={[{ text: formatMs(track.duration_ms) }]}
-      actions={<TrackActionPanel title={track.name} track={track} album={track.album} showGoToAlbum={showGoToAlbum} />}
+      actions={
+        <TrackActionPanel
+          title={track.name}
+          track={track}
+          album={track.album}
+          showGoToAlbum={showGoToAlbum}
+          onRefresh={onRefresh}
+        />
+      }
     />
   );
 }

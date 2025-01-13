@@ -41,6 +41,7 @@ I implemented infinite fetching and caching to solve this.
 
    - Persisted between Raycast runs (commands) using a SWR-like strategy.
    - Revalidated against your library on every run, using the total track count (done by fetching a single track from `me/tracks`). Upon revalidation, the search results are instantly updated.
+   - Manual refresh action for re-fetching the entire library, installed as a default action for every list item type. Just hit `cmd + r`.
 
 3. Response Model + Memory Optimization
 
@@ -115,7 +116,7 @@ I implemented infinite fetching and caching to solve this.
 - Overall performance is acceptable, but not optimal.
 
   1. The delay to fetch new data is an inevitable side effect of Spotify's API.
-  2. The initial results flash in/out once when loaded.
+  2. The initial results flash in/out once when loaded, as well as when refreshed.
   3. Search input can lag when excessive track results are displayed.
   4. Even on cache hit, the duration between running the command and seeing results is too much.
   5. The loading indicator jitters on the progress percentage update.
@@ -139,6 +140,4 @@ I implemented infinite fetching and caching to solve this.
 
 Every previous commit contains an AI-generated note containing the status of the PR, and any other information relevant to the commit.
 
-# TODO - TEMP
-
-- [ ] Add manual refresh action.
+100% of the commits in this PR are AI-generated. 🍾🤯

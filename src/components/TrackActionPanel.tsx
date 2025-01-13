@@ -5,15 +5,17 @@ import { PlayAction } from "./PlayAction";
 import { StartRadioAction } from "./StartRadioAction";
 import { AddToSavedTracksAction } from "./AddToSavedTracksAction";
 import { TracksList } from "./TracksList";
+import { RefreshAction } from "./RefreshAction";
 
 interface TrackActionPanelProps {
   title: string;
   track: MinimalTrack;
   album: MinimalTrack["album"];
   showGoToAlbum?: boolean;
+  onRefresh?: () => void;
 }
 
-export function TrackActionPanel({ title, track, album, showGoToAlbum }: TrackActionPanelProps) {
+export function TrackActionPanel({ title, track, album, showGoToAlbum, onRefresh }: TrackActionPanelProps) {
   return (
     <ActionPanel title={title}>
       <ActionPanel.Section>
@@ -37,6 +39,7 @@ export function TrackActionPanel({ title, track, album, showGoToAlbum }: TrackAc
             }
           />
         )}
+        {onRefresh && <RefreshAction onRefresh={onRefresh} />}
       </ActionPanel.Section>
       <FooterAction url={`https://open.spotify.com/track/${track.id}`} uri={track.uri} title={title} />
     </ActionPanel>

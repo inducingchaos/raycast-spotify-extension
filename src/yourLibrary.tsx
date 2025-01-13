@@ -25,7 +25,7 @@ type FilterValue = keyof typeof filters;
 function YourLibraryCommand() {
   const [searchText, setSearchText] = useState("");
   const [searchFilter, setSearchFilter] = useState<FilterValue>(getPreferenceValues()["Default-View"] ?? "all");
-  const { myLibraryData, myLibraryIsLoading, tracksFetchProgress } = useYourLibrary({
+  const { myLibraryData, myLibraryIsLoading, tracksFetchProgress, revalidate } = useYourLibrary({
     keepPreviousData: true,
   });
 
@@ -68,34 +68,54 @@ function YourLibraryCommand() {
                   limit={searchText ? undefined : 6}
                   playlists={myLibraryData?.playlists?.items}
                   tracks={myLibraryData?.tracks}
+                  onRefresh={revalidate}
                 />
-                <AlbumsSection type="list" limit={searchText ? undefined : 6} albums={myLibraryData?.albums?.items} />
+                <AlbumsSection
+                  type="list"
+                  limit={searchText ? undefined : 6}
+                  albums={myLibraryData?.albums?.items}
+                  onRefresh={revalidate}
+                />
                 <ArtistsSection
                   type="list"
                   limit={searchText ? undefined : 6}
                   artists={myLibraryData?.artists?.items}
+                  onRefresh={revalidate}
                 />
                 <TracksSection
                   limit={searchText ? undefined : 6}
                   tracks={myLibraryData?.tracks?.items}
                   title="Liked Songs"
+                  onRefresh={revalidate}
                 />
-                <ShowsSection type="list" limit={searchText ? undefined : 6} shows={myLibraryData?.shows?.items} />
+                <ShowsSection
+                  type="list"
+                  limit={searchText ? undefined : 6}
+                  shows={myLibraryData?.shows?.items}
+                  onRefresh={revalidate}
+                />
                 <EpisodesSection
                   limit={searchText ? undefined : 6}
                   episodes={myLibraryData?.episodes?.items}
                   title="Saved Episodes"
+                  onRefresh={revalidate}
                 />
               </>
             )}
 
-            {searchFilter === "tracks" && <TracksSection tracks={myLibraryData?.tracks?.items} title="Liked Songs" />}
+            {searchFilter === "tracks" && (
+              <TracksSection tracks={myLibraryData?.tracks?.items} title="Liked Songs" onRefresh={revalidate} />
+            )}
             {searchFilter === "episodes" && (
-              <EpisodesSection episodes={myLibraryData?.episodes?.items} title="Saved Episodes" />
+              <EpisodesSection
+                episodes={myLibraryData?.episodes?.items}
+                title="Saved Episodes"
+                onRefresh={revalidate}
+              />
             )}
 
             {searchFilter === "playlists" && (
-              <PlaylistsSection type="list" playlists={myLibraryData?.playlists?.items} />
+              <PlaylistsSection type="list" playlists={myLibraryData?.playlists?.items} onRefresh={revalidate} />
             )}
           </>
         )}
@@ -118,11 +138,17 @@ function YourLibraryCommand() {
         </Grid.Dropdown>
       }
     >
-      {searchFilter === "artists" && <ArtistsSection type="grid" columns={5} artists={myLibraryData?.artists?.items} />}
+      {searchFilter === "artists" && (
+        <ArtistsSection type="grid" columns={5} artists={myLibraryData?.artists?.items} onRefresh={revalidate} />
+      )}
 
-      {searchFilter === "albums" && <AlbumsSection type="grid" columns={5} albums={myLibraryData?.albums?.items} />}
+      {searchFilter === "albums" && (
+        <AlbumsSection type="grid" columns={5} albums={myLibraryData?.albums?.items} onRefresh={revalidate} />
+      )}
 
-      {searchFilter === "shows" && <ShowsSection type="grid" columns={5} shows={myLibraryData?.shows?.items} />}
+      {searchFilter === "shows" && (
+        <ShowsSection type="grid" columns={5} shows={myLibraryData?.shows?.items} onRefresh={revalidate} />
+      )}
     </Grid>
   );
 }
