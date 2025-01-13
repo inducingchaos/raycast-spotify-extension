@@ -1,13 +1,16 @@
 import { useCachedPromise } from "@raycast/utils";
 import { getMySavedTracks } from "../api/getMySavedTracks";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { LocalStorage, showToast, Toast } from "@raycast/api";
 import { MinimalTrack } from "../api/getMySavedTracks";
 
+// Constants
 const CACHE_NAMESPACE = "spotify-library";
 const LIBRARY_CACHE_KEY = `${CACHE_NAMESPACE}-saved`;
 const ITEMS_PER_PAGE = 50;
+const CLEANUP_DELAY = 1500;
 
+// Types
 type UseMySavedTracksProps = {
   fetchAll?: boolean;
   options?: {
@@ -16,167 +19,189 @@ type UseMySavedTracksProps = {
   };
 };
 
-export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracksProps = {}) {
-  const [fetchProgress, setFetchProgress] = useState<number>(0);
-  const [showProgress, setShowProgress] = useState(false);
-  const [isBackgroundUpdate, setIsBackgroundUpdate] = useState(false);
-  const [backgroundData, setBackgroundData] = useState<MinimalTrack[] | null>(null);
+type FetchState = {
+  progress: number;
+  showProgress: boolean;
+  isBackgroundUpdate: boolean;
+  backgroundData: MinimalTrack[] | null;
+  isFetching: boolean;
+};
 
-  // Memoize the fetch function to prevent unnecessary re-renders
+export function useMySavedTracks({ fetchAll = false, options }: UseMySavedTracksProps = {}) {
+  const fetchState = useRef<FetchState>({
+    progress: 0,
+    showProgress: false,
+    isBackgroundUpdate: false,
+    backgroundData: null,
+    isFetching: false,
+  });
+
+  // Memoized fetch function
   const fetchLibrary = useCallback(async () => {
     try {
-      // Try to get from cache first
       const cached = await LocalStorage.getItem<string>(LIBRARY_CACHE_KEY);
-      let cachedData;
-      if (cached) {
-        cachedData = JSON.parse(cached);
-      }
-
-      // Quick check for total count
+      const cachedData = cached ? JSON.parse(cached) : null;
       const quickCheck = await getMySavedTracks({ limit: 1, offset: 0, fetchAll: false });
 
-      // If we have valid cache and totals match, use it
-      if (cachedData && cachedData.items.length === quickCheck.total) {
-        setFetchProgress(100);
+      // Cache hit with matching totals
+      if (cachedData?.items.length === quickCheck.total) {
+        fetchState.current.progress = 100;
         return cachedData.items;
       }
 
-      // If we have cache but totals don't match, use cache and update in background
+      // Stale cache - background update
       if (cachedData) {
-        setIsBackgroundUpdate(true);
-        // Start background update
-        getMySavedTracks({
-          limit: ITEMS_PER_PAGE,
-          offset: 0,
-          fetchAll: true,
-          onProgress: (progress) => {
-            setFetchProgress(progress);
-            setShowProgress(true);
-          },
-        }).then(async (result) => {
-          await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
-          setBackgroundData(result.items);
-          setFetchProgress(100);
-
-          // Show completion toast
-          showToast({
-            style: Toast.Style.Success,
-            title: "Library updated",
-            message: `${result.items.length} items available`,
-          });
-
-          // Clean up states after a short delay
-          setTimeout(() => {
-            setIsBackgroundUpdate(false);
-            setShowProgress(false);
-            setFetchProgress(0);
-          }, 1500);
-        });
-
-        // Return stale cache immediately
+        fetchState.current.isBackgroundUpdate = true;
+        fetchState.current.isFetching = true;
+        backgroundUpdate();
         return cachedData.items;
       }
 
-      // No cache or invalid cache, fetch fresh
+      // Fresh fetch
+      fetchState.current.isFetching = true;
+      const result = await freshFetch();
+      showCompletionToast(result.length);
+      return result;
+    } catch (error) {
+      handleError(error);
+      throw error;
+    } finally {
+      if (!fetchState.current.isBackgroundUpdate) {
+        cleanupState();
+      }
+    }
+  }, [fetchAll]);
+
+  // Background update helper
+  const backgroundUpdate = async () => {
+    try {
       const result = await getMySavedTracks({
         limit: ITEMS_PER_PAGE,
         offset: 0,
         fetchAll: true,
-        onProgress: (progress) => {
-          setFetchProgress(progress);
-          setShowProgress(true);
-        },
+        onProgress: updateProgress,
       });
 
-      // Cache complete results
       await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
-      setFetchProgress(100);
+      fetchState.current.backgroundData = result.items;
+      fetchState.current.progress = 100;
+      fetchState.current.isFetching = false;
 
+      showCompletionToast(result.items.length);
+      cleanupState();
+      revalidate(); // Immediately revalidate after background update
+    } catch (error) {
+      handleError(error);
+      fetchState.current.isFetching = false;
+      cleanupState();
+    }
+  };
+
+  // Fresh fetch helper
+  const freshFetch = async () => {
+    try {
+      const result = await getMySavedTracks({
+        limit: ITEMS_PER_PAGE,
+        offset: 0,
+        fetchAll: true,
+        onProgress: updateProgress,
+      });
+
+      await LocalStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(result));
+      fetchState.current.progress = 100;
+      fetchState.current.isFetching = false;
       return result.items;
     } catch (error) {
-      if (error instanceof Error && error.message.includes("429")) {
-        showToast({
-          style: Toast.Style.Failure,
-          title: "Rate limit exceeded",
-          message: "Please wait a moment before trying again",
-        });
-      } else {
-        showToast({
-          style: Toast.Style.Failure,
-          title: "Failed to load library",
-          message: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
+      fetchState.current.isFetching = false;
       throw error;
     }
-  }, [fetchAll]);
+  };
 
-  const { data, error, isLoading, revalidate } = useCachedPromise(
-    fetchLibrary,
-    [], // No dependencies since we handle pagination internally
-    {
-      execute: options?.execute !== false,
-      keepPreviousData: true, // Always keep previous data to avoid flickering
-    },
-  );
-
-  // Update data when background fetch completes
-  useEffect(() => {
-    if (backgroundData) {
-      revalidate();
-      setBackgroundData(null);
+  // Progress update helper
+  const updateProgress = (progress: number) => {
+    // Only update if still fetching (prevents stuck progress)
+    if (fetchState.current.isFetching) {
+      fetchState.current.progress = progress;
+      fetchState.current.showProgress = true;
+      showProgressToast(progress);
     }
-  }, [backgroundData, revalidate]);
+  };
 
-  // Handle loading states and completion
+  // Toast helpers
+  const showProgressToast = (progress: number) => {
+    if (progress > 0 && fetchState.current.isFetching) {
+      showToast({
+        style: Toast.Style.Animated,
+        title: fetchState.current.isBackgroundUpdate ? "Updating your library..." : "Loading your library...",
+        message: `${progress}% complete`,
+      });
+    }
+  };
+
+  const showCompletionToast = (itemCount: number) => {
+    showToast({
+      style: Toast.Style.Success,
+      title: "Library updated",
+      message: `${itemCount} items available`,
+    });
+  };
+
+  // Error handling helper
+  const handleError = (error: unknown) => {
+    if (error instanceof Error && error.message.includes("429")) {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Rate limit exceeded",
+        message: "Please wait a moment before trying again",
+      });
+    } else {
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to load library",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
+  // Cleanup helper
+  const cleanupState = () => {
+    setTimeout(() => {
+      if (!fetchState.current.isFetching) {
+        fetchState.current = {
+          ...fetchState.current,
+          isBackgroundUpdate: false,
+          showProgress: false,
+          progress: 0,
+          backgroundData: null,
+          isFetching: false,
+        };
+      }
+    }, CLEANUP_DELAY);
+  };
+
+  const { data, error, isLoading, revalidate } = useCachedPromise(fetchLibrary, [], {
+    execute: options?.execute !== false,
+    keepPreviousData: true,
+  });
+
+  // Background data update effect
   useEffect(() => {
-    let toastTimer: NodeJS.Timeout;
-    let cleanupTimer: NodeJS.Timeout;
+    let mounted = true;
 
-    if (isLoading && !isBackgroundUpdate) {
-      setFetchProgress(0);
-      setShowProgress(true);
-    } else if (!isLoading && data && !isBackgroundUpdate) {
-      // Show completion toast when loading finishes and we have data
-      toastTimer = setTimeout(() => {
-        showToast({
-          style: Toast.Style.Success,
-          title: "Library loaded successfully",
-          message: `${data.length || 0} items available`,
-        });
-      }, 100); // Small delay to ensure states are settled
-
-      cleanupTimer = setTimeout(() => setShowProgress(false), 1500);
+    if (fetchState.current.backgroundData && mounted) {
+      fetchState.current.backgroundData = null;
     }
 
     return () => {
-      if (toastTimer) clearTimeout(toastTimer);
-      if (cleanupTimer) clearTimeout(cleanupTimer);
+      mounted = false;
     };
-  }, [isLoading, data, isBackgroundUpdate]);
-
-  // Show loading toast with progress
-  useEffect(() => {
-    if (showProgress && fetchProgress > 0 && isBackgroundUpdate) {
-      showToast({
-        style: Toast.Style.Animated,
-        title: "Updating your library...",
-        message: `${fetchProgress}% complete`,
-      });
-    } else if (showProgress && fetchProgress > 0) {
-      showToast({
-        style: Toast.Style.Animated,
-        title: "Loading your library...",
-        message: `${fetchProgress}% complete`,
-      });
-    }
-  }, [showProgress, fetchProgress, isBackgroundUpdate]);
+  }, [revalidate]);
 
   return {
     savedTracksData: data ? { items: data, total: data.length } : undefined,
     savedTracksError: error,
-    savedTracksIsLoading: isLoading && showProgress && !isBackgroundUpdate,
-    fetchProgress: isLoading ? fetchProgress : 100,
+    savedTracksIsLoading: isLoading && fetchState.current.showProgress && !fetchState.current.isBackgroundUpdate,
+    fetchProgress: isLoading ? fetchState.current.progress : 100,
     revalidate,
   };
 }

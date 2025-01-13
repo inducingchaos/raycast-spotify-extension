@@ -23,8 +23,9 @@ interface GetMySavedTracksProps {
 }
 
 const MAX_TRACKS_PER_REQUEST = 50;
-const RATE_LIMIT_DELAY = 100; // 100ms delay between requests - safer to avoid rate limits
 const BATCH_SIZE = 5; // Number of parallel requests per batch
+const RATE_LIMIT_PER_REQUEST = 100; // 100ms per request
+const RATE_LIMIT_DELAY = BATCH_SIZE * RATE_LIMIT_PER_REQUEST; // 500ms per batch
 
 // Helper function to split array into chunks
 function chunk<T>(array: T[], size: number): T[][] {
