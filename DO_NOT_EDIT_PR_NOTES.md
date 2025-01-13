@@ -87,6 +87,7 @@ interface MinimalTrack {
 - Consistent Liked Tracks list item UI
   - Changed filtered results layout
   - Now shows: `Title | Artists | Duration`
+- Changed default behavior to close window after play actions
 
 ## Known Issues
 

@@ -30,7 +30,7 @@
     "thomaslombart",
     "rhesamu",
     "themitpatel",
-    "rileybarabash"
+    "inducingchaos"
   ],
   "pastContributors": [
     "bkeys818"
@@ -52,7 +52,7 @@
       "description": "Close the Raycast window after performing an action",
       "type": "checkbox",
       "label": "Enabled",
-      "default": false,
+      "default": true,
       "required": false
     }
   ],
