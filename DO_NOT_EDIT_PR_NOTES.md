@@ -35,7 +35,7 @@ I implemented infinite fetching and caching to solve this.
 1. Data Fetching
 
    - Batched parallel requests (5 parallel per batch, 50 tracks per request). Individual requests are too slow, and combining them all would inevitably hit rate limits.
-   - Artificial delay between batches (100ms) to avoid rate limits.
+   - Artificial delay between batches (100ms) to avoid rate limits with exponential backoff (3 retries).
 
 2. Caching
 
@@ -83,6 +83,8 @@ I implemented infinite fetching and caching to solve this.
   3. A 3rd party API that can outsource recursive fetching, caching, and filtering for querying on-demand.
 
   I can confirm this is suitable for libraries up to 2,000 songs. Before minimizing the data, this many tracks would result in a memory heap overflow.
+
+  We also pre-allocate the result array to reduce memory pressure.
 
 - Double-fetching in development.
 
@@ -140,4 +142,4 @@ I implemented infinite fetching and caching to solve this.
 
 Every previous commit contains an AI-generated note containing the status of the PR, and any other information relevant to the commit.
 
-100% of the commits in this PR are AI-generated. 🍾🤯
+100% of the changes in this PR are AI-generated (except this one!). 🍾🤯
